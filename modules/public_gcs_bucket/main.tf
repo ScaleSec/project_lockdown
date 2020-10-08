@@ -9,7 +9,7 @@ locals {
 }
 
 ####################
-## Misc Resources ##
+## Misc resources ##
 ####################
 
 ## Used as a unique name suffix for the deployment
