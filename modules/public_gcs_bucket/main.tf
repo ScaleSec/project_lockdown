@@ -52,7 +52,7 @@ resource "google_organization_iam_member" "gcs_auto_remediate_custom_role_member
 
 ## GCS Remediate Cloud Function Service Account
 resource "google_service_account" "gcs_auto_remediate_cfn_sa" {
-  account_id   = "${lower(var.name)}-gcs-auto-remediate-cfn-sa"
+  account_id   = "${lower(var.name)}-gcs-auto-remediate-sa"
   display_name = "${var.name} GCS Auto Remediate CFN SA"
 }
 
