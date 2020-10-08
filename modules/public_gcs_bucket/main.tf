@@ -52,7 +52,7 @@ resource "google_organization_iam_member" "gcs_auto_remediate_custom_role_member
 
 ## GCS Remediate Cloud Function Service Account
 resource "google_service_account" "gcs_auto_remediate_cfn_sa" {
-  account_id   = "${lower(var.name)}-gcs_auto_remediate_cfn_sa"
+  account_id   = "${lower(var.name)}-gcs-auto-remediate-cfn-sa"
   display_name = "${var.name} GCS Auto Remediate CFN SA"
 }
 
@@ -74,20 +74,20 @@ resource "google_pubsub_topic_iam_member" "publisher" {
 data "archive_file" "source" {
   type        = "zip"
   source_dir  = "../../src/public_gcs_bucket"
-  output_path = "../../builds/public_gcs_bucket.zip"
+  output_path = "../../builds/public_gcs_bucket/public_gcs_bucket.zip"
 }
 
 ## Cloud Function source bucket
 resource "google_storage_bucket" "gcs_auto_remediate_cfn_bucket" {
-  project  = var.project
-  name     = "${lower(var.name)}-gcs_auto_remediate_cfn_bucket_${var.project}"
+  project = var.project
+  name    = "${lower(var.name)}-gcs_auto_remediate_cfn_bucket_${var.project}"
 }
 
 ## Cloud Function source file upload
 resource "google_storage_bucket_object" "gcs_auto_remediate_cfn_source_archive" {
-  name     = "src-${lower(replace(base64encode(data.archive_file.source.output_md5), "=", ""))}.zip"
-  bucket   = google_storage_bucket.gcs_auto_remediate_cfn_bucket.name
-  source   = data.archive_file.source.output_path
+  name   = "src-${lower(replace(base64encode(data.archive_file.source.output_md5), "=", ""))}.zip"
+  bucket = google_storage_bucket.gcs_auto_remediate_cfn_bucket.name
+  source = data.archive_file.source.output_path
 }
 
 ## GCS Remediate Cloud Function
