@@ -3,7 +3,7 @@
 ## Local variables ##
 #####################
 
-## Sets the Cloud Function Name
+## Sets the Cloud Function name
 locals {
   function_name = "${lower(var.name)}-gcs_auto_remediate_function_${random_id.random.hex}"
 }
