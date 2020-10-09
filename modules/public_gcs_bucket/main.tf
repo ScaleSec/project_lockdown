@@ -91,14 +91,14 @@ resource "google_storage_bucket_object" "gcs_auto_remediate_cfn_source_archive" 
 }
 
 ## GCS Remediate Cloud Function
-resource "google_cloudfunctions_function" "iam_anomalous_grant_function" {
+resource "google_cloudfunctions_function" "gcs_auto_remediate_cfn" {
   name                  = local.function_name
   description           = "Cloud Function to remediate public GCS buckets."
   available_memory_mb   = 128
   source_archive_bucket = google_storage_bucket.gcs_auto_remediate_cfn_bucket.name
   source_archive_object = google_storage_bucket_object.gcs_auto_remediate_cfn_source_archive.name
   timeout               = 60
-  entry_point           = "process_log_entry"
+  entry_point           = "pubsub_trigger"
   service_account_email = google_service_account.gcs_auto_remediate_cfn_sa.email
   runtime               = "python38"
 

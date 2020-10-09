@@ -19,11 +19,11 @@ variable "name" {
 
 variable "org_sink_filter" {
   description = "The log filter to apply to the Org Level Cloud Logging export."
-  default     = "" ## TODO
+  default     = "resource.type=\"gcs_bucket\" protoPayload.methodName=\"storage.setIamPermissions\""
 }
 
 variable "function_perms" {
+  type = list(string)
   description = "The Cloud Function Cloud IAM permissions."
-  default     = "" ## TODO
+  default     = ["logging.logEntries.create", "storage.buckets.getIamPolicy", "storage.buckets.setIamPolicy"] ## TODO
 }
-
