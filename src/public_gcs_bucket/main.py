@@ -5,7 +5,7 @@ import json
 import logging
 
 from google.cloud import storage
-import google.cloud.logging
+from google.cloud import logging as glogging
 
 def pubsub_trigger(data, context):
     """
@@ -15,7 +15,7 @@ def pubsub_trigger(data, context):
     # Integrates cloud logging handler to python logging
     create_logger()
 
-    logging.info("Received GCS public remediation log from Pub/Sub.")
+    logging.info("Received GCS permissions update log from Pub/Sub. Checking for public access.")
 
     # Converting log to json
     data_buffer = base64.b64decode(data['data'])
@@ -41,7 +41,7 @@ def pubsub_trigger(data, context):
         # Sets the new bucket policy
         bucket.set_iam_policy(remediated_policy)
 
-        logging.info('Finished updating {} IAM Policy'.format(bucket_name))
+        logging.info('Finished updating the IAM permissions on bucket: {}'.format(bucket_name))
     else:
         logging.info('No Members to remove from {}'.format(bucket_name))
 
@@ -55,15 +55,13 @@ def eval_bucket(project_id, bucket_name, policy):
     for role in policy:
         # For each IAM binding, find the role and member
         members = policy[role]
-        text = 'Role: {}, Members: {}'.format(role, members)
-        logging.info(text)
 
         # For every member, check if they are public
         for member in members:
             if member == "allAuthenticatedUsers" or member == "allUsers":
                 # Add member to list if member is public
-                member_bindings_to_remove.update({member : x})
-                logging.info('Found {} with role {} on {}.'.format(member, role, bucket_name))
+                member_bindings_to_remove.update({role : member})
+                logging.info('Found public member: {} with role: {} on bucket: {}.'.format(member, role, bucket_name))
             else:
                 logging.info("Member {} with role {} is not public.".format(member, role))
 
@@ -82,9 +80,9 @@ def remove_public_iam_members_from_policy(bucket_name, member_bindings_to_remove
     policy = bucket.get_iam_policy()
 
     # Remove public members from GCS bucket policy
-    for member in member_bindings_to_remove:
-        policy[member].discard(member_bindings_to_remove[member])
-        logging.info('Removed member {} with role {} from {}.'.format(member, member_bindings_to_remove[member], bucket_name))
+    for role in member_bindings_to_remove:
+        policy[role].discard(member_bindings_to_remove[role])
+        logging.info('Removed member: {} with role: {} from bucket: {}.'.format(member_bindings_to_remove[role], role,  bucket_name))
 
     # Return updated private bucket policy
     return policy
@@ -93,7 +91,7 @@ def remove_public_iam_members_from_policy(bucket_name, member_bindings_to_remove
 def create_logger():
 
     # Instantiates a cloud logging client
-    client = google.cloud.logging.Client()
+    client = glogging.Client()
 
     # Retrieves a Cloud Logging handler based on the environment
     # you're running in and integrates the handler with the
