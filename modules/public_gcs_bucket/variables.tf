@@ -19,7 +19,7 @@ variable "name" {
 
 variable "org_sink_filter" {
   description = "The log filter to apply to the Org Level Cloud Logging export."
-  default     = "resource.type=\"gcs_bucket\" protoPayload.methodName=\"storage.setIamPermissions\""
+  default     = "resource.type=\"gcs_bucket\" protoPayload.methodName=\"storage.setIamPermissions\" AND protoPayload.serviceData.policyDelta.bindingDeltas.member=\"allUsers\" OR protoPayload.serviceData.policyDelta.bindingDeltas.member=\"allAuthenticatedUsers\""
 }
 
 variable "function_perms" {
