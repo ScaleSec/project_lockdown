@@ -9,13 +9,13 @@ from google.cloud import logging as glogging
 
 def pubsub_trigger(data, context):
     """
-    Used with Pub/Sub trigger method to evaluate bucket for public access and remediate if public access exists
+    Used with Pub/Sub trigger method to evaluate bucket for public access and remediate if public access exists.
     """
 
     # Integrates cloud logging handler to python logging
     create_logger()
 
-    logging.info("Received GCS permissions update log from Pub/Sub. Checking for public access.")
+    logging.info('Received GCS permissions update log from Pub/Sub. Checking for public access.')
 
     # Converting log to json
     data_buffer = base64.b64decode(data['data'])
@@ -27,19 +27,26 @@ def pubsub_trigger(data, context):
 
     # Configuring storage client
     storage_client = storage.Client()
-
     bucket = storage_client.bucket(bucket_name)
-    policy = bucket.get_iam_policy()
+
+    # Get the current GCS bucket policy
+    try:
+        policy = bucket.get_iam_policy()
+    except:
+        logging.error('Could not view bucket: {} IAM policy.'.format(bucket_name))
 
     # Evaluating GCS bucket policy for public bindings
     member_bindings_to_remove = eval_bucket(project_id, bucket_name, policy)
 
     if member_bindings_to_remove:
         # Removes the public IAM bindings from the bucket and returns the new bucket policy
-        remediated_policy = remove_public_iam_members_from_policy(bucket_name, member_bindings_to_remove)
+        remediated_policy = remove_public_iam_members_from_policy(bucket_name, member_bindings_to_remove, policy, storage_client)
 
-        # Sets the new bucket policy
-        bucket.set_iam_policy(remediated_policy)
+        # Sets the new private bucket policy
+        try:
+            bucket.set_iam_policy(remediated_policy)
+        except:
+            logging.error('Could not update the IAM permissions on bucket: {}.'.format(bucket_name))
 
         logging.info('Finished updating the IAM permissions on bucket: {}'.format(bucket_name))
     else:
@@ -47,7 +54,7 @@ def pubsub_trigger(data, context):
 
 def eval_bucket(project_id, bucket_name, policy):
     """
-    Evaluates a bucket for public access and returns list of public members and roles
+    Evaluates a bucket for public access and returns list of public members and roles.
     """
     # Empty list to add public IAM bindings to
     member_bindings_to_remove = {}
@@ -63,21 +70,17 @@ def eval_bucket(project_id, bucket_name, policy):
                 member_bindings_to_remove.update({role : member})
                 logging.info('Found public member: {} with role: {} on bucket: {}.'.format(member, role, bucket_name))
             else:
-                logging.info("Member {} with role {} is not public.".format(member, role))
+                logging.info('Member {} with role {} is not public.'.format(member, role))
 
     logging.info("Total list of public IAM bindings to remove: {}".format(member_bindings_to_remove))
 
     return member_bindings_to_remove
 
-def remove_public_iam_members_from_policy(bucket_name, member_bindings_to_remove):
+def remove_public_iam_members_from_policy(bucket_name, member_bindings_to_remove, policy, storage_client):
     """
-    Takes a dictionary of roles with public members and removes them from a GCS bucket Policy.  Returns the bucket Policy without public memebers.
+    Takes a dictionary of roles with public members and removes them from a GCS bucket Policy object.  
+    Returns the bucket Policy without public members.
     """
-
-    # Create storage client
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(bucket_name)
-    policy = bucket.get_iam_policy()
 
     # Remove public members from GCS bucket policy
     for role in member_bindings_to_remove:
