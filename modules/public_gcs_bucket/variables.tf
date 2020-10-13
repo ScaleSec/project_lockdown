@@ -17,11 +17,6 @@ variable "name" {
   default     = "lckdn"
 }
 
-variable "org_sink_filter" {
-  description = "The log filter to apply to the Org Level Cloud Logging export."
-  default     = "resource.type=\"gcs_bucket\"  protoPayload.methodName=\"storage.setIamPermissions\" AND NOT protoPayload.authenticationInfo.principalEmail =~ \"^.*gcs-auto-remediate-sa.*$\""
-}
-
 variable "function_perms" {
   type = list(string)
   description = "The Cloud Function Cloud IAM permissions."
