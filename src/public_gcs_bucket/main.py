@@ -3,6 +3,7 @@ import pytz
 import base64
 import json
 import logging
+import sys
 
 from google.cloud import storage
 from google.cloud import logging as glogging
@@ -45,10 +46,10 @@ def pubsub_trigger(data, context):
         # Sets the new private bucket policy
         try:
             bucket.set_iam_policy(remediated_policy)
+            logging.info('Finished updating the IAM permissions on bucket: {}'.format(bucket_name))
         except:
             logging.error('Could not update the IAM permissions on bucket: {}.'.format(bucket_name))
-
-        logging.info('Finished updating the IAM permissions on bucket: {}'.format(bucket_name))
+            sys.exit(1)
     else:
         logging.info('No Members to remove from {}'.format(bucket_name))
 
