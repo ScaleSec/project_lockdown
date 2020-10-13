@@ -56,6 +56,7 @@ def eval_bucket(project_id, bucket_name, policy):
     """
     Evaluates a bucket for public access and returns list of public members and roles.
     """
+
     # Empty list to add public IAM bindings to
     member_bindings_to_remove = {}
 
@@ -67,7 +68,7 @@ def eval_bucket(project_id, bucket_name, policy):
         for member in members:
             if member == "allAuthenticatedUsers" or member == "allUsers":
                 # Add member to list if member is public
-                member_bindings_to_remove.update({role : member})
+                member_bindings_to_remove[member] = role
                 logging.info('Found public member: {} with role: {} on bucket: {}.'.format(member, role, bucket_name))
             else:
                 logging.info('Member {} with role {} is not public.'.format(member, role))
@@ -83,9 +84,9 @@ def remove_public_iam_members_from_policy(bucket_name, member_bindings_to_remove
     """
 
     # Remove public members from GCS bucket policy
-    for role in member_bindings_to_remove:
-        policy[role].discard(member_bindings_to_remove[role])
-        logging.info('Removed member: {} with role: {} from bucket: {}.'.format(member_bindings_to_remove[role], role,  bucket_name))
+    for member in member_bindings_to_remove:
+        policy[member_bindings_to_remove[member]].discard(member)
+        logging.info('Removed member: {} with role: {} from bucket: {}.'.format(member, member_bindings_to_remove[member], bucket_name))
 
     # Return updated private bucket policy
     return policy
