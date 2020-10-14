@@ -1,5 +1,3 @@
-import datetime
-import pytz
 import base64
 import json
 import logging
@@ -36,9 +34,9 @@ def pubsub_trigger(data, context):
         logging.error('Could not view bucket: {} IAM policy.'.format(bucket_name))
 
     # Evaluating GCS bucket policy for public bindings
-    eval_bucket(project_id, bucket_name, policy, bucket)
+    eval_bucket(bucket_name, policy, bucket, project_id)
 
-def eval_bucket(project_id, bucket_name, policy, bucket):
+def eval_bucket(bucket_name, policy, bucket, project_id):
     """
     Evaluates a bucket for public access and returns list of public members and roles.
     """
@@ -55,7 +53,7 @@ def eval_bucket(project_id, bucket_name, policy, bucket):
             if member == "allAuthenticatedUsers" or member == "allUsers":
                 # Add member and role to list if member is public
                 member_bindings_to_remove[member] = role
-                logging.info('Found public member: {} with role: {} on bucket: {}.'.format(member, role, bucket_name))
+                logging.info('Found public member: {} with role: {} on bucket: {} in project: {}.'.format(member, role, bucket_name, project_id))
             else:
                 logging.info('Member {} with role {} is not public.'.format(member, role))
 
@@ -66,7 +64,7 @@ def eval_bucket(project_id, bucket_name, policy, bucket):
 
 def remove_public_iam_members_from_policy(bucket_name, member_bindings_to_remove, bucket):
     """
-    Takes a dictionary of roles with public members and removes them from a GCS bucket Policy object.  
+    Takes a dictionary of roles with public members and removes them from a GCS bucket Policy object.
     """
     # Re-checks the bucket policy to catch previously made updates
     # This is critical in the event that a user makes a `setIamPermissions` API call
