@@ -47,4 +47,4 @@ jobs:
           DEFAULT_BRANCH: 'main'
           VALIDATE_ALL_CODEBASE: true
           VALIDATE_TERRAFORM: true
-          VALIDATE_PYTHON: true
+          VALIDATE_PYTHON_PYLINT: true
