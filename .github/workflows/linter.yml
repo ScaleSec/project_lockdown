@@ -45,6 +45,6 @@ jobs:
         uses: docker://github/super-linter:v3
         env:
           DEFAULT_BRANCH: 'main'
-          VALIDATE_ALL_CODEBASE: true
+          VALIDATE_ALL_CODEBASE: false
           VALIDATE_TERRAFORM: true
           VALIDATE_PYTHON_PYLINT: true
