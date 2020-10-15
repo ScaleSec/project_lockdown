@@ -6,6 +6,8 @@
 ## Sets the Cloud Function name
 locals {
   function_name = "${lower(var.name)}-gcs_auto_remediate_function_${random_id.random.hex}"
+  function_sa_name = "${lower(var.name)}-gcs-auto-remediate-sa"
+  log_sink_filter = "resource.type=\"gcs_bucket\"  protoPayload.methodName=\"storage.setIamPermissions\" AND NOT protoPayload.authenticationInfo.principalEmail = ${google_service_account.gcs_auto_remediate_cfn_sa.email}"
 }
 
 ####################
@@ -26,7 +28,7 @@ resource "google_logging_organization_sink" "gcs_auto_remediate_sink" {
   name             = "${lower(var.name)}-gcs_auto_remediate_sink_${random_id.random.hex}"
   org_id           = var.org_id
   destination      = "pubsub.googleapis.com/projects/${var.project}/topics/${google_pubsub_topic.gcs_auto_remediate_topic.name}"
-  filter           = var.org_sink_filter
+  filter           = local.log_sink_filter
   include_children = true
 }
 
@@ -52,7 +54,7 @@ resource "google_organization_iam_member" "gcs_auto_remediate_custom_role_member
 
 ## GCS Remediate Cloud Function Service Account
 resource "google_service_account" "gcs_auto_remediate_cfn_sa" {
-  account_id   = "${lower(var.name)}-gcs-auto-remediate-sa"
+  account_id   = local.function_sa_name
   display_name = "${var.name} GCS Auto Remediate CFN SA"
 }
 
