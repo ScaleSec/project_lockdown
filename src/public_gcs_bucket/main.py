@@ -69,7 +69,10 @@ def remove_public_iam_members_from_policy(bucket_name, member_bindings_to_remove
     # Re-checks the bucket policy to catch previously made updates
     # This is critical in the event that a user makes a `setIamPermissions` API call
     # with 1> member and >=2 roles due to the way we iterate over roles
-    policy = bucket.get_iam_policy()
+    try:
+        policy = bucket.get_iam_policy()
+    except:
+        logging.error('Could not view bucket: {} IAM policy.'.format(bucket_name))
 
     # Remove public members from GCS bucket policy
     for member in member_bindings_to_remove:
