@@ -28,4 +28,4 @@ Trust is a key component of any security tool so we have built Project Lockdown 
 - __Isolated workloads.__ Each use-case or Cloud Function has it's own custom role, it's own service account and its own separate Pub/Sub topic to receive events. The only shared resource between the different remediation modules is a Pub/Sub topic where you can subscribe to for alerts.
 
 ## Can I contribute or request features?
-We welcome any questions, bug reports, feature requests or enhancements via a GitHub Issue or Pull Requests. If you plan to contribute to Project Lockdown please follow our [Contribution Guidelines](LINK HERE) for suggestions and requirements.
+We welcome any questions, bug reports, feature requests or enhancements via a GitHub Issue or Pull Requests. If you plan to contribute to Project Lockdown please follow our [Contribution Guidelines](docs/CONTRIBUTING.md) for suggestions and requirements.
