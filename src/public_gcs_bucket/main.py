@@ -87,7 +87,9 @@ def remove_public_iam_members_from_policy(bucket_name, member_bindings_to_remove
         raise
 
 def create_logger():
-
+    """
+    Integrates the Cloud Logging handler with the python logging module
+    """
     # Instantiates a cloud logging client
     client = glogging.Client()
 
