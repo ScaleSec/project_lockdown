@@ -32,6 +32,7 @@ def pubsub_trigger(data, context):
     # Create Dataset object
     dataset = client.get_dataset(dataset_id) 
 
+    # Get Dataset Access entry
     access_entries = dataset.access_entries
     print(access_entries)
 
