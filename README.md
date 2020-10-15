@@ -12,7 +12,7 @@ Project Lockdown is a suite of serverless event-driven auto remediation Cloud Fu
 ## Why is this needed?
 Project Lockdown was born out of a common theme from our customers - there are certain configurations or events that they do not want to happen but there are currently no provider-native controls available to prevent these actions. For example, making a [GCS bucket](https://cloud.google.com/storage/docs/access-control/making-data-public) or [BigQuery dataset](https://cloud.google.com/bigquery/public-data) that stores sensitive information public puts your data at risk and it can only take minutes for malicious individuals to find those resources and exfiltrate data. 
 
-There are compensating controls like the Organization Policy constraint `constraints/iam.allowedPolicyMemberDomains` that attempt to prevent GCS buckets from being made public but have potentially negative side effects. Organizations must constantly keep a running list of G Suite IDs and track where and when hierarchies are broken which maybe be viewed as too much effort.
+There are compensating controls like the Organization Policy [constraint](https://cloud.google.com/resource-manager/docs/organization-policy/org-policy-constraints) `constraints/iam.allowedPolicyMemberDomains` that attempt to prevent GCS buckets from being made public but have potentially negative side effects. Organizations must constantly keep a running list of G Suite IDs and track where and when hierarchies are broken which maybe be viewed as too much effort.
 
 Project Lockdown aims to be a safe, lightweight, and inexpensive tool to increase your security posture.
 
