@@ -23,18 +23,70 @@ def pubsub_trigger(data, context):
     log_entry = json.loads(data_buffer)
 
     # Get dataset ID and project ID from log event
-    dataset = log_entry['resource']['labels']['dataset_id']
+    dataset_log = log_entry['resource']['labels']['dataset_id']
     project_id = log_entry['resource']['labels']['project_id']
 
     #Create dataset_ref
-    dataset_id = project_id + "." + dataset
+    dataset_id = project_id + "." + dataset_log
+    
+    try:
+        # Create Dataset object
+        dataset = client.get_dataset(dataset_id)
+    except:
+        logging.info('Could not access BigQuery Dataset {}'.format(dataset_id))
 
-    # Create Dataset object
-    dataset = client.get_dataset(dataset_id) 
+    # Evaluate the dataset
+    private_access_entry = eval_dataset(dataset)
 
-    # Get Dataset Access entry
-    access_entries = dataset.access_entries
-    print(access_entries)
+    if private_access_entry:
+        update_dataset(client, private_access_entry, dataset)
+    else:
+        logging.info('No public members found. Taking no action on {}'.format(dataset_id))
+
+
+def eval_dataset(dataset):
+    """
+    Check the BigQuery Dataset Access Entries to see if public members exist.
+    """
+
+    private_access_entry = []
+    access_entries_list = list(dataset.access_entries)
+
+    public_user1 = {'iamMember': 'allUsers'}
+    public_user2 = {'specialGroup': 'allAuthenticatedUsers'}
+
+    for entry in access_entries_list:
+        # Convert each Access Entry into a dictionary
+        entry_dict = entry.to_api_repr()
+        if public_user1.items() <= entry_dict.items():
+            logging.info('Public IAM member "allUsers" found.')
+        elif public_user2.items() <= entry_dict.items():
+            logging.info('Public IAM member "allAuthenticatedUsers" found.')
+        else:
+            private_access_entry.append(entry)
+    
+    # Compare Original Access Entry to new by looking at their lengths
+    private_access_list = list(private_access_entry)
+    if len(access_entries_list) != len(private_access_list):
+        logging.info('A new BigQuery Dataset Access Entry list is ready to be applied.')
+        return private_access_entry
+    else:
+        logging.info('No public IAM members found. BigQuery Dataset is private.')
+
+def update_dataset(client, private_access_entry, dataset):
+    """
+    Updates the Public BigQuery Dataset with a new access entry list.
+    """
+
+    # Convert to BigQuery Dataset attribute
+    dataset.access_entries = private_access_entry
+
+    try:
+        client.update_dataset(dataset, ["access_entries"]) 
+        logging.info('The BigQuery Dataset {} has been updated.'.format(dataset))
+    except:
+        logging.error('Failed to update the BigQuery Dataset {}'.format(dataset))
+        raise
 
 
 def create_logger():
