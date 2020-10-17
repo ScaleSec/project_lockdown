@@ -20,5 +20,10 @@ variable "name" {
 variable "function_perms" {
   type = list(string)
   description = "The Cloud Function Cloud IAM permissions."
-  default     = ["logging.logEntries.create", "storage.buckets.getIamPolicy", "storage.buckets.setIamPolicy"] ## TODO
+  default     = ["logging.logEntries.create", "bigquery.datasets.update", "bigquery.datasets.get"] ## TODO
+}
+
+variable "function_name" {
+  type = string
+  description = "name of the function"
 }
