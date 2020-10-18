@@ -36,4 +36,4 @@ We welcome any questions, bug reports, feature requests or enhancements via a Gi
 
 Edit `terraform.tfvars` and add an entry in `enabled_modules` for the desired function. 
 
-Functions not in this mapping will not be enabled and will just be skipped. This uses a single module. 
+Functions not specified in this mapping will not be enabled and will be skipped. This uses a single module. 
