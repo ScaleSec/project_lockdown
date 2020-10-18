@@ -1,4 +1,4 @@
-# put in a feature request for the below... so annoying you can't do this
+# TODO: put in a feature request for the below functionality
 
 # module "function" {
 #   for_each = var.enabled_modules
