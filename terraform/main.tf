@@ -7,7 +7,7 @@
 locals {
   function_name = "${lower(var.name)}-${var.function_name}_function_${random_id.random.hex}"
   function_sa_name = "${lower(var.name)}-sa"
-  log_sink_filter = "resource.type=\"bigquery_resource\"  protoPayload.methodName=\"google.iam.v1.IAMPolicy.SetIamPolicy\" AND NOT protoPayload.authenticationInfo.principalEmail = ${google_service_account.cfn_sa.email}"
+  log_sink_filter = "${var.log_sink_filter} = ${google_service_account.cfn_sa.email}"
 }
 
 ####################

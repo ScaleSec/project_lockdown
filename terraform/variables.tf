@@ -27,3 +27,8 @@ variable "function_name" {
   type = string
   description = "name of the function"
 }
+
+variable "log_sink_filter" {
+  description = "A filter so the CFN does not trigger itself. Unique per CFN"
+}
+
