@@ -52,7 +52,7 @@ resource "google_organization_iam_member" "custom_role_member" {
 ## Project level resources ##
 #############################
 
-## BQ Remediate Cloud Function Service Account
+## Cloud Function Service Account
 resource "google_service_account" "cfn_sa" {
   account_id   = local.function_sa_name
   display_name = "${var.name} ${var.function_name} C SA"
@@ -92,7 +92,7 @@ resource "google_storage_bucket_object" "cfn_source_archive" {
   source = data.archive_file.source.output_path
 }
 
-## BQ Remediate Cloud Function
+## Cloud Function
 resource "google_cloudfunctions_function" "cfn" {
   name                  = local.function_name
   description           = "Cloud Function to remediate ${var.function_name}."
