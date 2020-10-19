@@ -29,3 +29,11 @@ Trust is a key component of any security tool so we have built Project Lockdown 
 
 ## Can I contribute or request features?
 We welcome any questions, bug reports, feature requests or enhancements via a GitHub Issue or Pull Requests. If you plan to contribute to Project Lockdown please follow our [Contribution Guidelines](docs/CONTRIBUTING.md) for suggestions and requirements.
+
+## Usage
+
+### Terraform
+
+Edit `terraform.tfvars` and add an entry in `enabled_modules` for the desired function. 
+
+Functions not specified in this mapping will not be enabled and will be skipped. This uses a single module. 
