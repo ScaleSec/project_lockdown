@@ -5,5 +5,5 @@ variable "region" {
 
 variable "enabled_modules" {
   description = "A mapping of enabled modules and their variables"
-  type = any
+  type        = any
 }

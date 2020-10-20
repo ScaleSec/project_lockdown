@@ -1,6 +1,6 @@
 
 provider "google" {
-  region  = var.region
+  region = var.region
 }
 
 provider "archive" {}

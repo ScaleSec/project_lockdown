@@ -18,13 +18,13 @@ variable "name" {
 }
 
 variable "function_perms" {
-  type = list(string)
+  type        = list(string)
   description = "The Cloud Function Cloud IAM permissions."
   default     = ["logging.logEntries.create", "bigquery.datasets.update", "bigquery.datasets.get"] ## TODO
 }
 
 variable "function_name" {
-  type = string
+  type        = string
   description = "name of the function"
 }
 

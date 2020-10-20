@@ -39,7 +39,7 @@ def pubsub_trigger(data, context):
     private_access_entry = eval_dataset(dataset)
 
     if private_access_entry:
-        update_dataset(client, private_access_entry, dataset)
+        update_dataset(client, private_access_entry, dataset, dataset_id)
     else:
         logging.info('No public members found. Taking no action on {}'.format(dataset_id))
 
@@ -73,7 +73,7 @@ def eval_dataset(dataset):
     else:
         logging.info('No public IAM members found. BigQuery Dataset is private.')
 
-def update_dataset(client, private_access_entry, dataset):
+def update_dataset(client, private_access_entry, dataset, dataset_id):
     """
     Updates the Public BigQuery Dataset with a new access entry list.
     """
@@ -83,9 +83,9 @@ def update_dataset(client, private_access_entry, dataset):
 
     try:
         client.update_dataset(dataset, ["access_entries"]) 
-        logging.info('The BigQuery Dataset {} has been updated.'.format(dataset))
+        logging.info('The BigQuery Dataset {} has been updated.'.format(dataset_id))
     except:
-        logging.error('Failed to update the BigQuery Dataset {}'.format(dataset))
+        logging.error('Failed to update the BigQuery Dataset {}'.format(dataset_id))
         raise
 
 
