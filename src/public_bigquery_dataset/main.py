@@ -23,11 +23,11 @@ def pubsub_trigger(data, context):
     log_entry = json.loads(data_buffer)
 
     # Get dataset ID and project ID from log event
-    dataset_log = log_entry['resource']['labels']['dataset_id']
+    dataset_id = log_entry['resource']['labels']['dataset_id']
     project_id = log_entry['resource']['labels']['project_id']
 
     #Create dataset_ref
-    dataset_id = project_id + "." + dataset_log
+    dataset_id = project_id + "." + dataset_id
     
     try:
         # Create Dataset object
