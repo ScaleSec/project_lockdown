@@ -55,7 +55,7 @@ resource "google_organization_iam_member" "custom_role_member" {
 ## Cloud Function Service Account
 resource "google_service_account" "cfn_sa" {
   account_id   = local.function_sa_name
-  display_name = "${var.name} ${var.function_name} C SA"
+  display_name = "${var.name} ${var.function_name} CFN SA"
 }
 
 ## Pub/Sub Topic for log exports
