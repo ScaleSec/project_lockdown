@@ -1,5 +1,7 @@
 # Project Lockdown
 
+![Code Coverage](./.coverage.svg)
+
 Ideas are being brainstormed [here](https://scalesec.atlassian.net/wiki/spaces/CON/pages/615809029/GCP+Auto+Remediation+Suite+for+High+Risk+Events+Project+Lockdown) Please add suggestions!
 
 
@@ -30,7 +32,22 @@ Trust is a key component of any security tool so we have built Project Lockdown 
 ## Can I contribute or request features?
 We welcome any questions, bug reports, feature requests or enhancements via a GitHub Issue or Pull Requests. If you plan to contribute to Project Lockdown please follow our [Contribution Guidelines](docs/CONTRIBUTING.md) for suggestions and requirements.
 
-## Usage
+
+## Usage 
+
+### Requirements
+
+* Docker
+* Make
+* Bash
+
+### Local Testing
+
+This will run the container with tests and generate code coverage.
+
+```shell
+make test
+```
 
 ### Terraform
 
