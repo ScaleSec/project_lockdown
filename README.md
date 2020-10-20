@@ -48,3 +48,9 @@ This will run the container with tests and generate code coverage.
 ```shell
 make test
 ```
+
+### Terraform
+
+Edit `terraform.tfvars` and add an entry in `enabled_modules` for the desired function. 
+
+Functions not specified in this mapping will not be enabled and will be skipped. This uses a single module. 

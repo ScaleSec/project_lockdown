@@ -1,5 +1,5 @@
 # Local .terraform directories
-**/.terraform/*
+**/.terraform
 
 # .tfstate files
 *.tfstate
@@ -28,8 +28,6 @@ override.tf.json
 # Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
 # example: *tfplan*
 
-# Ignore build files
-builds/*
 pip_cache
 coverage
 
@@ -178,3 +176,4 @@ cython_debug/
 .DS_Store
 
 **.vscode
+builds
