@@ -57,8 +57,12 @@ jobs:
       - name: Commit coverage
         if: steps.test.conclusion == 'success'
         run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add .coverage.svg
-          git commit -m "adding coverage from Github Actions"
-          git push
+          if ! git diff --quiet HEAD; then
+            git config user.name github-actions
+            git config user.email github-actions@github.com
+            git add .coverage.svg
+            git commit -m "adding coverage from Github Actions"
+            git push
+          else
+            echo "no changes detected"
+          fi
