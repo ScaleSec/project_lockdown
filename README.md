@@ -48,6 +48,8 @@ make test
 
 ### Terraform
 
-Edit `terraform.tfvars` and add an entry in `enabled_modules` for the desired function. 
+Copy `terraform.tfvars` into a file that ends in `.auto.tfvars` and edit `enabled_modules` as desired.
 
-Functions not specified in this mapping will not be enabled and will be skipped. This uses a single module. 
+`terraform.tfvars` will be maintained with a kitchen sink example config as a reference.
+
+Functions not specified in `enabled_modules` will not be created and will be skipped. This uses a single module. 
