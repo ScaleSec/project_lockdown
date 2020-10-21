@@ -1,0 +1,64 @@
+###########################
+###########################
+##   Python Unit tests   ##
+###########################
+###########################
+name: Unit tests
+
+#############################
+# Start the job on all push #
+#############################
+on:
+  push:
+    branches-ignore:
+      - 'main'
+
+###############
+# Set the Job #
+###############
+jobs:
+  build:
+    # Name the Job
+    name: Unit tests
+    # Set the agent to run on
+    runs-on: ubuntu-latest
+    # multi-version python support
+    strategy:
+      matrix:
+        python-version: [3.8]
+
+    ##################
+    # Load all steps #
+    ##################
+    steps:
+      ##########################
+      # Checkout the code base #
+      ##########################
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          module_dir=$(ls -d src/*)
+          pip install wheel coverage coverage-badge
+          for dir in $module_dir; do; cd "$dir" || exit 1; pip install -r requirements.txt; cd ../.. || exit 1; done
+
+      - name: Run tests
+        run: |
+          coverage run -m unittest discover -s tests          
+          coverage-badge -f -q -o coverage/.coverage
+
+      - name: Commit coverage
+        run: |
+          coverage run -m unittest discover -s tests          
+          coverage-badge -f -q -o coverage/.coverage
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add coverage/.coverage
+          git commit -m "adding coverage from Github Actions"
+          git push

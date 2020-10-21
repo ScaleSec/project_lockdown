@@ -6,9 +6,6 @@ set -eou pipefail
 
 source "$VENV_DIR"
 
-
-#  todo: run tests
-
 # Run test and output to .coverage
 coverage run -m unittest discover -s tests
 
