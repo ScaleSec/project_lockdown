@@ -177,3 +177,5 @@ cython_debug/
 
 **.vscode
 builds
+
+*.tfvars
