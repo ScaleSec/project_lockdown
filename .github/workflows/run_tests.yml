@@ -49,16 +49,16 @@ jobs:
           for dir in $module_dir; do cd "$dir" || exit 1; pip install -r requirements.txt; cd ../.. || exit 1; done
 
       - name: Run tests
+        id: test
         run: |
           coverage run -m unittest discover -s tests          
-          coverage-badge -f -q -o coverage/.coverage
+          coverage-badge -f -q -o .coverage
 
       - name: Commit coverage
+        if: steps.test.conclusion == 'success'
         run: |
-          coverage run -m unittest discover -s tests          
-          coverage-badge -f -q -o coverage/.coverage
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add coverage/.coverage
+          git add .coverage
           git commit -m "adding coverage from Github Actions"
           git push
