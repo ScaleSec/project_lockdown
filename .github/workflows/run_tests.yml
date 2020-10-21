@@ -46,7 +46,7 @@ jobs:
         run: |
           module_dir=$(ls -d src/*)
           pip install wheel coverage coverage-badge
-          for dir in $module_dir; do; cd "$dir" || exit 1; pip install -r requirements.txt; cd ../.. || exit 1; done
+          for dir in $module_dir; do cd "$dir" || exit 1; pip install -r requirements.txt; cd ../.. || exit 1; done
 
       - name: Run tests
         run: |
