@@ -1,9 +1,7 @@
 #!/bin/bash
-
 set -eou pipefail
 
-# User the venv
-
+# Use the venv
 source "$VENV_DIR"
 
 # Run test and output to .coverage

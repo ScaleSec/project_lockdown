@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # install deps in one venv for speed
 
 module_dir=$(ls -d src/*)
