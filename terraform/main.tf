@@ -5,9 +5,9 @@
 
 ## Sets the Cloud Function name
 locals {
-  function_name = "${lower(var.name)}-${var.function_name}_function_${random_id.random.hex}"
+  function_name    = "${lower(var.name)}-${var.function_name}_function_${random_id.random.hex}"
   function_sa_name = "${lower(var.name)}-sa"
-  log_sink_filter = "${var.log_sink_filter} = ${google_service_account.cfn_sa.email}"
+  log_sink_filter  = "${var.log_sink_filter} = ${google_service_account.cfn_sa.email}"
 }
 
 ####################
@@ -54,6 +54,7 @@ resource "google_organization_iam_member" "custom_role_member" {
 
 ## Cloud Function Service Account
 resource "google_service_account" "cfn_sa" {
+  project      = var.project
   account_id   = local.function_sa_name
   display_name = "${var.name} ${var.function_name} CFN SA"
 }
@@ -96,6 +97,7 @@ resource "google_storage_bucket_object" "cfn_source_archive" {
 resource "google_cloudfunctions_function" "cfn" {
   name                  = local.function_name
   description           = "Cloud Function to remediate ${var.function_name}."
+  project               = var.project
   available_memory_mb   = 128
   source_archive_bucket = google_storage_bucket.cfn_bucket.name
   source_archive_object = google_storage_bucket_object.cfn_source_archive.name
