@@ -18,8 +18,7 @@ dev-build:
 	docker build -t $(APP_NAME):dev .
 
 test: dev-build
-	docker run -it -v $(PWD)/pip_cache:/app/pip_cache -v $(PWD)/coverage:/app/coverage "$(APP_NAME):dev"
-	@mv coverage/.coverage.svg ./.coverage.svg
+	docker run -it -v $(PWD)/pip_cache:/app/pip_cache "$(APP_NAME):dev"
 
 push:
 	docker tag $(APP_NAME):$(TAG) gcr.io/$(PROJECT_ID)/$(APP_NAME):$(TAG)
