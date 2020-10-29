@@ -79,6 +79,8 @@ def eval_bucket(bucket_name, policy, bucket, project_id, mode):
                 logging.info('Lockdown is in read-only mode. Publishing message to Pub/Sub and taking no action.')
                 # Publish message to Pub/Sub
                 publish_message(project_id, message)
+            else:
+               logging.error('Lockdown unable to determine the mode.')
         else:
                 logging.info(f'No public members found on bucket {bucket_name}')
 

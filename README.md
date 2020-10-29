@@ -32,6 +32,10 @@ We welcome any questions, bug reports, feature requests or enhancements via a Gi
 
 ## Usage 
 
+### Modes
+
+Project Lockdown has the capability to run in two modes: `read` and `write`. In `write` mode, lockdown will automaticaly remediate the findings it discovers. Both `read` and `write` modes will send a an alert to a Pub/Sub topic to integrate into your alerting process.
+
 ### Requirements
 
 * Docker
@@ -49,6 +53,8 @@ make test
 ### Terraform
 
 Copy `terraform.tfvars` into a file that ends in `.auto.tfvars` and edit `enabled_modules` as desired.
+
+To enable automatic remediation, be sure to set the `mode` variable as `write`
 
 `terraform.tfvars` will be maintained with a kitchen sink example config as a reference.
 
