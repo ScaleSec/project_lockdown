@@ -13,7 +13,10 @@ def pubsub_trigger(data, context):
     """
 
     # Determine if CFN is running in view-only mode
-    mode = getenv('MODE')
+    try:
+        mode = getenv('MODE')
+    except:
+        logging.error('Mode not found in environment variable.')
 
     # Integrates cloud logging handler to python logging
     create_logger()
@@ -66,7 +69,7 @@ def eval_bucket(bucket_name, policy, bucket, project_id, mode):
         if member_bindings_to_remove:
             logging.info(f'List of public IAM bindings to remove for role: {role} - {member_bindings_to_remove}')
             # Set our pub/sub message
-            message = f"Lockdown is in mode: {mode}. Found public members on bucket {bucket_name} in project {project_id}. "
+            message = f"Lockdown is in mode: {mode}. Found public members on bucket: {bucket_name} in project: {project_id}. "
             # if the function is running in "write" mode, remove public members
             if mode == "write":
                 logging.info('Lockdown is in write mode. Removing public IAM members.')
@@ -79,10 +82,8 @@ def eval_bucket(bucket_name, policy, bucket, project_id, mode):
                 logging.info('Lockdown is in read-only mode. Publishing message to Pub/Sub and taking no action.')
                 # Publish message to Pub/Sub
                 publish_message(project_id, message)
-            else:
-               logging.error('Lockdown unable to determine the mode.')
         else:
-                logging.info(f'No public members found on bucket {bucket_name}')
+            logging.info(f'No public members found on bucket {bucket_name}')
 
 def remove_public_iam_members_from_policy(bucket_name, member_bindings_to_remove, bucket, message):
     """
@@ -102,6 +103,7 @@ def remove_public_iam_members_from_policy(bucket_name, member_bindings_to_remove
 
     # Set the new bucket policy
     try:
+        bucket.set_iam_policy(policy)
         logging.info('Finished updating the IAM permissions on bucket: {} for role: {}'.format(bucket_name, member_bindings_to_remove[member]))
     except:
         logging.error('Could not update the IAM permissions on bucket: {}.'.format(bucket_name))
@@ -115,20 +117,19 @@ def publish_message(project_id, message):
     # Create Pub/Sub Client
     pub_client = pubsub_v1.PublisherClient()
 
-    # TODO: create topic in tf and set as cfn env var
-    # Get alerting Pub/Sub topic from environment var
-    topic_id = getenv('TOPIC_ID')
+    try:
+        topic_id = getenv('TOPIC_ID')
+    except:
+        logging.error('Topic ID not found in environment variable.')
 
-    # Create topic object 
+    # Create topic object
     topic = pub_client.topic_path(project_id, topic_id)
 
     # Pub/Sub messages must be a bytestring
     data = message.encode("utf-8")
 
     try:
-        future = publisher.publish(topic, data)
-        result = future.result()
-        logging.info(f'{result}')
+        pub_client.publish(topic, data)
         logging.info(f'Published message to {topic}')
     except:
         logging.error(f'Could not publish message to {topic_id}')
