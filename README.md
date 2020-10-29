@@ -52,10 +52,20 @@ make test
 
 ### Terraform
 
-Copy `terraform.tfvars` into a file that ends in `.auto.tfvars` and edit `enabled_modules` as desired.
+Project Lockdown is able to deploy many different remediation functions and their accompanying resources using the module `for_each` functionality. This allows us to only specify one `main.tf` in the [terraform](./terraform) directory but deploy as many copies as there are entries in the variable `enabled_modules`.
 
-To enable automatic remediation, be sure to set the `mode` variable as `write`
+To configure Terraform for a deployment:
 
-`terraform.tfvars` will be maintained with a kitchen sink example config as a reference.
+- Copy `terraform.tfvars` into a file that ends in `.auto.tfvars` and edit the `enabled_modules` variable as desired.
+- To enable automatic remediation, be sure to set the `mode` variable as `write`
 
-Functions not specified in `enabled_modules` will not be created and will be skipped. This uses a single module. 
+
+__Note: Functions not specified in `enabled_modules` will not be created and will be skipped.__
+
+#### Inputs
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| enabled\_modules | A mapping of enabled modules and their variables | `any` | n/a | yes |
+| region | The region to deploy lockdown resources to. | `string` | `"us-east1"` | no |
+| topic\_project | The project to deploy the alert Pub/Sub topic to. | `string` | n/a | yes |
