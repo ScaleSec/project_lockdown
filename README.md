@@ -23,7 +23,7 @@ When a target event is captured by the log sink it is sent to a Cloud Pub/Sub to
 ## How can I trust this?
 Trust is a key component of any security tool so we have built Project Lockdown with that in mind. A few examples of this are:
 - __Least privilege access.__ The Cloud Function that performs actions in your environment has only the permissions it needs to perform its programmed actions. No predefined roles are used and only custom purpose-driven roles are assigned.
-- __View-only by default.__ Project Lockdown will not take action in your environment unless you configure it to do so. Out of the box Project Lockdown is view only.
+- __Read-only by default.__ Project Lockdown will not take action in your environment unless you configure it to do so. Out of the box Project Lockdown is read only.
 - __Isolated workloads.__ Each use-case or Cloud Function has it's own custom role, it's own service account and its own separate Pub/Sub topic to receive events. The only shared resource between the different remediation modules is a Pub/Sub topic where you can subscribe to for alerts.
 
 ## Can I contribute or request features?
