@@ -38,10 +38,15 @@ def pubsub_trigger(data, context):
     # Get the current BigQuery Table Policy
     table_policy = get_table_policy(client, table_ref)
 
-    validate_table_policy(table_policy)
+    validation = validate_table_policy(table_policy, table_id)
 
+    if validation:
+        print("Found Public User beginning new policy generation.")
+        generate_table_policy():
+    else:
+        print("Nothing public.")
 
-def get_table_policy(client, table_id):
+def get_table_policy(client, table_ref):
     """
     Gets the BigQuery Table ACL / IAM Policy.
     """
@@ -53,12 +58,36 @@ def get_table_policy(client, table_id):
 
     return table_policy_json
 
-def validate_table_policy(table_policy):
+def validate_table_policy(table_policy, table_id):
     """
     Checks for public IAM members in a BigQuery table IAM policy.
     """
 
-def update_table_policy()
+    bindings = table_policy['bindings']
+
+    for binding in bindings:
+        members = binding['members']
+        for member in members:
+            if "allUsers" == member:
+                logging.info(f'Found public IAM member: allUsers on dataset table: {table_id}.')
+                return member
+            elif "allAuthenticatedUsers" == member:
+                logging.info(f'Found public IAM member: allAuthenticatedUsers on dataset table: {table_id}.')
+                return member
+            else:
+                logging.info(f'Member: {member} is not public.')
+                print(f'Member: {member} is not public.')
+
+def generate_table_policy(client, table_ref):
+    """
+    Generates a new BigQuery Table policy without public IAM members.
+    """
+    # We need to get the new table policy each time due to the unique etag
+    table_policy = client.get_iam_policy(table_ref)
+
+    # Convert to JSON
+    table_policy_json = table_policy.to_api_repr()
+
 
 def set_table_policy()
 
