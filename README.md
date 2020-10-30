@@ -34,7 +34,7 @@ We welcome any questions, bug reports, feature requests or enhancements via a Gi
 
 ### Modes
 
-Project Lockdown has the capability to run in two modes: `read` and `write`. In `write` mode, lockdown will automaticaly remediate the findings it discovers. Both `read` and `write` modes will send an alert to a Pub/Sub topic to integrate into your alerting process.
+Project Lockdown has the capability to run in two modes: `read` and `write`. In `write` mode, lockdown will automatically remediate the findings it discovers. Both `read` and `write` modes will send an alert to a Pub/Sub topic to integrate into your alerting process.
 
 ### Requirements
 
