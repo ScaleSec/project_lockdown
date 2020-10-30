@@ -110,4 +110,9 @@ resource "google_cloudfunctions_function" "cfn" {
     event_type = "google.pubsub.topic.publish"
     resource   = google_pubsub_topic.topic.name
   }
+
+  environment_variables = {
+    MODE     = var.mode
+    TOPIC_ID = var.topic_id
+  }
 }

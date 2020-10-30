@@ -20,7 +20,6 @@ variable "name" {
 variable "function_perms" {
   type        = list(string)
   description = "The Cloud Function Cloud IAM permissions."
-  default     = ["logging.logEntries.create", "bigquery.datasets.update", "bigquery.datasets.get"] ## TODO
 }
 
 variable "function_name" {
@@ -32,3 +31,13 @@ variable "log_sink_filter" {
   description = "A filter so the CFN does not trigger itself. Unique per CFN"
 }
 
+variable "mode" {
+  type        = string
+  default     = "read"
+  description = "The mode to run lockdown in, either read or write."
+}
+
+variable "topic_id" {
+  type        = string
+  description = "The Pub/Sub topic ID to send alerts to."
+}

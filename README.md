@@ -32,6 +32,10 @@ We welcome any questions, bug reports, feature requests or enhancements via a Gi
 
 ## Usage 
 
+### Modes
+
+Project Lockdown has the capability to run in two modes: `read` and `write`. In `write` mode, lockdown will automaticaly remediate the findings it discovers. Both `read` and `write` modes will send an alert to a Pub/Sub topic to integrate into your alerting process.
+
 ### Requirements
 
 * Docker
@@ -48,8 +52,21 @@ make test
 
 ### Terraform
 
-Copy `terraform.tfvars` into a file that ends in `.auto.tfvars` and edit `enabled_modules` as desired.
+Project Lockdown is able to deploy many different remediation functions and their accompanying resources using the module `for_each` functionality. This allows us to only specify one `main.tf` in the [terraform](./terraform) directory but deploy as many copies as there are entries in the variable `enabled_modules`.
 
-`terraform.tfvars` will be maintained with a kitchen sink example config as a reference.
+To configure Terraform for a deployment:
 
-Functions not specified in `enabled_modules` will not be created and will be skipped. This uses a single module. 
+- Copy `terraform.tfvars` into a file that ends in `.auto.tfvars` and edit the `enabled_modules` variable as desired.
+- To enable automatic remediation, be sure to set the `mode` variable as `write`
+
+
+__Note: Functions not specified in `enabled_modules` will not be created and will be skipped.__
+
+#### Inputs
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| enabled\_modules | A mapping of enabled modules and their variables | `any` | n/a | yes |
+| region | The region to deploy lockdown resources to. | `string` | `"us-east1"` | no |
+| topic\_name | The Pub/Sub topic to send messages to when a finding is generated. | `string` | `"project_lockdown_alert_topic"` | no |
+| topic\_project | The project to deploy the alert Pub/Sub topic to. | `string` | n/a | yes |
