@@ -42,7 +42,7 @@ def pubsub_trigger(data, context):
 
     if validation:
         print("Found Public User beginning new policy generation.")
-        generate_table_policy():
+        generate_table_policy(client, table_ref)
     else:
         print("Nothing public.")
 
