@@ -41,7 +41,7 @@ def pubsub_trigger(data, context):
         # Create Dataset object
         dataset = client.get_dataset(dataset_id)
     except:
-        logging.info('Could not access BigQuery Dataset {}'.format(dataset_id))
+        logging.info(f'Could not access BigQuery Dataset {dataset_id}')
 
     # Evaluate the dataset
     private_access_entry = eval_dataset(dataset, dataset_log, project_id)
@@ -55,7 +55,7 @@ def pubsub_trigger(data, context):
             # Publish message to Pub/Sub
             publish_message(project_id, message)
             # Remove public members
-            update_dataset(client, private_access_entry, dataset, dataset_id)
+            update_dataset(client, private_access_entry, dataset_log, dataset)
         # if function is in read mode, take no action and publish message to pub/sub
         if mode == "read":
             logging.info('Lockdown is in read-only mode. Publishing message to Pub/Sub and taking no action.')
@@ -94,7 +94,7 @@ def eval_dataset(dataset, dataset_log, project_id):
     else:
         logging.info('No public IAM members found. BigQuery Dataset is private.')
 
-def update_dataset(client, private_access_entry, dataset, dataset_id):
+def update_dataset(client, private_access_entry, dataset_log, dataset):
     """
     Updates the Public BigQuery Dataset with a new access entry list.
     """
@@ -104,9 +104,9 @@ def update_dataset(client, private_access_entry, dataset, dataset_id):
 
     try:
         client.update_dataset(dataset, ["access_entries"]) 
-        logging.info('The BigQuery Dataset {} has been updated.'.format(dataset_id))
+        logging.info(f'The BigQuery Dataset: {dataset_log} has been updated.')
     except:
-        logging.error('Failed to update the BigQuery Dataset {}'.format(dataset_id))
+        logging.error(f'Failed to update the BigQuery Dataset: {dataset_log}')
         raise
 
 
