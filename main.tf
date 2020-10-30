@@ -12,7 +12,7 @@
 # }
 
 resource "google_pubsub_topic" "alerting_topic" {
-  name = "project_lockdown_alert_topic"
+  name    = var.topic_name
   project = var.topic_project
 
 }
