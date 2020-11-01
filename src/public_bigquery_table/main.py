@@ -22,6 +22,10 @@ def pubsub_trigger(data, context):
     data_buffer = base64.b64decode(data['data'])
     log_entry = json.loads(data_buffer)
 
+    # Get table resource ID from log entry
+    ## TODO: add validation to verify this is an update to a bq table
+    table_id = log_entry['resourceName']
+
     # Create the fully-qualified table ID in standard SQL format
     # Split the table_id into a list of strings
     table_list = table_id.split('/')
@@ -34,64 +38,82 @@ def pubsub_trigger(data, context):
 
     # Get the table ref
     table_ref = client.get_table(table_id)
-
+    
     # Get the current BigQuery Table Policy
     table_policy = get_table_policy(client, table_ref)
 
-    validation = validate_table_policy(table_policy, table_id)
+    # Generate a new policy without public members
+    new_policy = validate_table_policy(table_policy, table_id, table_ref)
 
-    if validation:
-        print("Found Public User beginning new policy generation.")
-        generate_table_policy(client, table_ref)
+    ##TODO: Add alerting and mode functionality.
+    if new_policy:
+        logging.info(f"Updating BigQuery table: {table_id} with new table policy.")
+        update_table_policy(new_policy, client, table_ref, table_id)
     else:
-        print("Nothing public.")
+        logging.info(f"The BigQuery Table: {table_id} is not public facing.")
+
 
 def get_table_policy(client, table_ref):
     """
     Gets the BigQuery Table ACL / IAM Policy.
     """
-
-    # We need to get the new table policy each time due to the unique etag
+    
+    # Get the current IAM table policy (table ACL)
     table_policy = client.get_iam_policy(table_ref)
 
-    table_policy_json = table_policy.to_api_repr()
+    return table_policy
 
-    return table_policy_json
-
-def validate_table_policy(table_policy, table_id):
+def validate_table_policy(table_policy, table_id, table_ref):
     """
     Checks for public IAM members in a BigQuery table IAM policy.
     """
 
-    bindings = table_policy['bindings']
+    # Create the public users list to reference when creating new members.
+    public_users = ["allAuthenticatedUsers", "allUsers"]
 
-    for binding in bindings:
-        members = binding['members']
-        for member in members:
-            if "allUsers" == member:
-                logging.info(f'Found public IAM member: allUsers on dataset table: {table_id}.')
-                return member
-            elif "allAuthenticatedUsers" == member:
-                logging.info(f'Found public IAM member: allAuthenticatedUsers on dataset table: {table_id}.')
-                return member
-            else:
-                logging.info(f'Member: {member} is not public.')
-                print(f'Member: {member} is not public.')
+    # Create our new bindings
+    bindings = []
 
-def generate_table_policy(client, table_ref):
+    # table_policy is an IAM Policy class and has the bindings attribute
+    for binding in table_policy.bindings:
+        # Creates our members list for each IAM binding
+        members = binding.get("members")
+        # Check to see if there is an IAM policy directly attached to BQ table.
+        # Inherited bindings do not display here. Only ones directly attached
+        if members:
+            # Reference our public users list and remove from members
+            members = {i for i in members if i not in public_users}
+            # Create a new binding using the same role and updated members list
+            new_binding = {
+                "role": binding["role"],
+                "members": sorted(members)
+            }
+            # Use the same condition on mew IAM binding
+            condition = binding.get("condition")
+            if condition:
+                new_binding["condition"] = condition
+            # Add our new binding to the bindings variable for the new policy
+            bindings.append(new_binding)
+        else:
+            logging.info(f'No IAM bindings found on BQ table: {table_id}.')
+    # Set the new bindings entry using the updated bindings variable
+    table_policy.bindings = bindings
+
+    print(f'New Policy: {table_policy}')
+
+    return table_policy
+
+def update_table_policy(new_policy, client, table_ref, table_id):
     """
-    Generates a new BigQuery Table policy without public IAM members.
+    Updates the BigQuery table with the new private IAM policy
     """
-    # We need to get the new table policy each time due to the unique etag
-    table_policy = client.get_iam_policy(table_ref)
 
-    # Convert to JSON
-    table_policy_json = table_policy.to_api_repr()
-
-
-def set_table_policy()
-
-
+    try:
+        client.set_iam_policy(table_ref, new_policy)
+        logging.info(f"IAM policy successfully updated on BigQuery Table: {table_id}.")
+    except:
+        logging.error(f'Cannot update BQ table: {table_id}.')
+        raise
 
 def publish_message(project_id, message):
     """
