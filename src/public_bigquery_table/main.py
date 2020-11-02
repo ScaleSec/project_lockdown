@@ -4,6 +4,7 @@ import logging
 
 from google.cloud import bigquery
 from google.cloud import logging as glogging
+from google.cloud import pubsub_v1
 
 def pubsub_trigger(data, context):
     """
@@ -29,7 +30,7 @@ def pubsub_trigger(data, context):
     log_entry = json.loads(data_buffer)
 
     # Get table resource ID from log entry
-    ## TODO: add validation to verify this is an update to a bq table
+
     table_id = log_entry['resourceName']
     project_id = log_entry['resource']['labels']['project_id']
 
@@ -45,12 +46,12 @@ def pubsub_trigger(data, context):
 
     # Get the table ref
     table_ref = client.get_table(table_id)
-    
+
     # Get the current BigQuery Table Policy
     table_policy = get_table_policy(client, table_ref)
 
     # Generate a new policy without public members
-    new_policy = validate_table_policy(table_policy, table_id, table_ref)
+    new_policy = validate_table_policy(table_policy, table_id)
 
     if new_policy:
         # Set our pub/sub message
@@ -73,13 +74,13 @@ def get_table_policy(client, table_ref):
     """
     Gets the BigQuery Table ACL / IAM Policy.
     """
-    
+
     # Get the current IAM table policy (table ACL)
     table_policy = client.get_iam_policy(table_ref)
 
     return table_policy
 
-def validate_table_policy(table_policy, table_id, table_ref):
+def validate_table_policy(table_policy, table_id):
     """
     Checks for public IAM members in a BigQuery table IAM policy.
     """
@@ -114,8 +115,6 @@ def validate_table_policy(table_policy, table_id, table_ref):
             logging.info(f'No IAM bindings found on BQ table: {table_id}.')
     # Set the new bindings entry using the updated bindings variable
     table_policy.bindings = bindings
-
-    print(f'New Policy: {table_policy}')
 
     return table_policy
 
@@ -169,4 +168,3 @@ def create_logger():
     # Python logging module
     client.get_default_handler()
     client.setup_logging()
-
