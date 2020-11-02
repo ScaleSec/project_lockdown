@@ -10,6 +10,12 @@ def pubsub_trigger(data, context):
     Used with Pub/Sub trigger method to evaluate the BigQuery Table for public members.
     """
 
+    # Determine if CFN is running in view-only mode
+    try:
+        mode = getenv('MODE')
+    except:
+        logging.error('Mode not found in environment variable.')
+
     #Create BigQuery Client
     client = bigquery.Client()
 
@@ -25,6 +31,7 @@ def pubsub_trigger(data, context):
     # Get table resource ID from log entry
     ## TODO: add validation to verify this is an update to a bq table
     table_id = log_entry['resourceName']
+    project_id = log_entry['resource']['labels']['project_id']
 
     # Create the fully-qualified table ID in standard SQL format
     # Split the table_id into a list of strings
@@ -45,10 +52,19 @@ def pubsub_trigger(data, context):
     # Generate a new policy without public members
     new_policy = validate_table_policy(table_policy, table_id, table_ref)
 
-    ##TODO: Add alerting and mode functionality.
     if new_policy:
-        logging.info(f"Updating BigQuery table: {table_id} with new table policy.")
-        update_table_policy(new_policy, client, table_ref, table_id)
+        # Set our pub/sub message
+        message = f"Lockdown is in mode: {mode}. Found public members on BigQuery table: {table_id}."
+        if mode == "write":
+            logging.info(f'Lockdown is in write mode. Updating BigQuery table: {table_id} with new table policy."')
+            # Publish message to Pub/Sub
+            publish_message(project_id, message)
+            # Updates BQ table with private table policy
+            update_table_policy(new_policy, client, table_ref, table_id)
+        if mode == "read":
+            logging.info('Lockdown is in read-only mode. Publishing message to Pub/Sub and taking no action.')
+            # Publish message to Pub/Sub
+            publish_message(project_id, message)
     else:
         logging.info(f"The BigQuery Table: {table_id} is not public facing.")
 
