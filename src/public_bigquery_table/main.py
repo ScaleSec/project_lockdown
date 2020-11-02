@@ -32,7 +32,7 @@ def pubsub_trigger(data, context):
 
     # Get table resource ID from log entry
 
-    table_id = log_entry['resourceName']
+    table_id = log_entry['protoPayload']['serviceData']['setIamPolicyRequest']['resource']
     project_id = log_entry['resource']['labels']['project_id']
 
     # Create the fully-qualified table ID in standard SQL format
@@ -58,13 +58,13 @@ def pubsub_trigger(data, context):
         # Set our pub/sub message
         message = f"Lockdown is in mode: {mode}. Found public members on BigQuery table: {table_id}."
         if mode == "write":
-            logging.info(f'Lockdown is in write mode. Updating BigQuery table: {table_id} with new table policy."')
+            logging.info(f'Found public members on BQ table: {table_id}. Lockdown is in write mode. Updating BigQuery table: {table_id} with new table policy."')
             # Publish message to Pub/Sub
             publish_message(project_id, message)
             # Updates BQ table with private table policy
             update_table_policy(new_policy, client, table_ref, table_id)
         if mode == "read":
-            logging.info('Lockdown is in read-only mode. Publishing message to Pub/Sub and taking no action.')
+            logging.info('Found public members on BQ table: {table_id}. Lockdown is in read-only mode. Publishing message to Pub/Sub and taking no action.')
             # Publish message to Pub/Sub
             publish_message(project_id, message)
     else:
