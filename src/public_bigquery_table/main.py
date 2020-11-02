@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 
+from os import getenv
 from google.cloud import bigquery
 from google.cloud import logging as glogging
 from google.cloud import pubsub_v1
