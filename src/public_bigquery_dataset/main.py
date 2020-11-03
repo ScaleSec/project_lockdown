@@ -49,18 +49,17 @@ def pubsub_trigger(data, context):
     if private_access_entry:
         # Set our pub/sub message
         message = f"Lockdown is in mode: {mode}. Found public members on dataset: {dataset_id} in project: {project_id}."
+        # Publish message to Pub/Sub
+        logging.info(f'Publishing message to Pub/Sub.')
+        publish_message(project_id, message)
         # if the function is running in "write" mode, remove public members
         if mode == "write":
             logging.info('Lockdown is in write mode. Removing public IAM members from dataset.')
-            # Publish message to Pub/Sub
-            publish_message(project_id, message)
             # Remove public members
             update_dataset(client, private_access_entry, dataset_log, dataset)
         # if function is in read mode, take no action and publish message to pub/sub
         if mode == "read":
-            logging.info('Lockdown is in read-only mode. Publishing message to Pub/Sub and taking no action.')
-            # Publish message to Pub/Sub
-            publish_message(project_id, message)
+            logging.info('Lockdown is in read-only mode. Taking no action.')
     else:
         logging.info(f'No public members found. Taking no action on {dataset_id}')
 
