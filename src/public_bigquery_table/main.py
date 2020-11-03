@@ -55,17 +55,18 @@ def pubsub_trigger(data, context):
     new_policy = validate_table_policy(table_policy, table_id)
 
     if new_policy:
+        logging.info(f'Found public members on BQ table: {table_id}.')
         # Set our pub/sub message
         message = f"Lockdown is in mode: {mode}. Found public members on BigQuery table: {table_id}."
         # Publish message to Pub/Sub
         logging.info(f'Publishing message to Pub/Sub.')
         publish_message(project_id, message)
         if mode == "write":
-            logging.info(f'Found public members on BQ table: {table_id}. Lockdown is in write mode. Updating BigQuery table: {table_id} with new table policy."')
+            logging.info(f'Lockdown is in write mode. Updating BigQuery table: {table_id} with new table policy."')
             # Updates BQ table with private table policy
             update_table_policy(new_policy, client, table_ref, table_id)
         if mode == "read":
-            logging.info(f'Found public members on BQ table: {table_id}. Lockdown is in read-only mode. Taking no action.')
+            logging.info('Lockdown is in read-only mode. Taking no action.')
     else:
         logging.info(f"The BigQuery Table: {table_id} is not public facing.")
 
