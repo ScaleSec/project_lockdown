@@ -67,21 +67,20 @@ def eval_bucket(bucket_name, policy, bucket, project_id, mode):
 
         # If there are public members, check the cloudfunctions mode
         if member_bindings_to_remove:
-            logging.info(f'List of public IAM bindings to remove for role: {role} - {member_bindings_to_remove}')
+            logging.info(f'List of public IAM bindings to remove for role: {role} - {member_bindings_to_remove}.')
             # Set our pub/sub message
             message = f"Lockdown is in mode: {mode}. Found public members on bucket: {bucket_name} in project: {project_id}. "
+            # Publish message to Pub/Sub
+            logging.info(f'Publishing message to Pub/Sub.')
+            publish_message(project_id, message)
             # if the function is running in "write" mode, remove public members
             if mode == "write":
                 logging.info('Lockdown is in write mode. Removing public IAM members.')
-                # Publish message to Pub/Sub
-                publish_message(project_id, message)
                 # Removes the public IAM bindings from the bucket for this specific role
                 remove_public_iam_members_from_policy(bucket_name, member_bindings_to_remove, bucket, message)
             # if function is in read mode, take no action and publish message to pub/sub
             if mode == "read":
-                logging.info('Lockdown is in read-only mode. Publishing message to Pub/Sub and taking no action.')
-                # Publish message to Pub/Sub
-                publish_message(project_id, message)
+                logging.info('Lockdown is in read-only mode. Taking no action.')
         else:
             logging.info(f'No public members found on bucket {bucket_name}')
 
