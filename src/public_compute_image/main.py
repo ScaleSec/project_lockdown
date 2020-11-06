@@ -169,7 +169,7 @@ def publish_message(project_id, message):
 
 def create_service():
     """
-    Creates the GCP Cloud Resource Service.
+    Creates the GCP Compute Service.
     """
     return googleapiclient.discovery.build('compute', 'v1')
 
