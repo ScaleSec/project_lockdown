@@ -36,7 +36,7 @@
 #     region = "us-east1",
 #     mode   = "read",
 #     name = "computeimage",
-#     log_sink_filter = "resource.type=\"gce_image\" protoPayload.methodName\"v1.compute.images.setIamPolicy\" protoPayload.request.policy.bindings.members=\"allAuthenticatedUsers\" OR protoPayload.request.policy.bindings.members=\"allUsers\" AND NOT protoPayload.authenticationInfo.principalEmail"
+#     log_sink_filter = "resource.type=\"gce_image\" protoPayload.methodName=\"v1.compute.images.setIamPolicy\" protoPayload.request.policy.bindings.members=\"allAuthenticatedUsers\" OR protoPayload.request.policy.bindings.members=\"allUsers\" AND NOT protoPayload.authenticationInfo.principalEmail"
 #     function_perms = ["logging.logEntries.create", "compute.images.setIamPolicy", "compute.images.getIamPolicy", "pubsub.topics.publish"]
 #   }
 # }
