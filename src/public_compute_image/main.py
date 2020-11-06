@@ -50,7 +50,7 @@ def pubsub_trigger(data, context):
     policy = get_iam_policy(compute_client, image_id, project_id)
 
     # Generate a new policy without public members
-    new_policy = eval_iam_policy(policy, image_id, project_id
+    new_policy = eval_iam_policy(policy, image_id, project_id)
 
     if new_policy:
         # Set our pub/sub message
