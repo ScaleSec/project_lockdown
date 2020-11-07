@@ -5,6 +5,7 @@ import logging
 from os import getenv
 from google.cloud import logging as glogging
 from google.cloud import pubsub_v1
+from googleapiclient.discovery_cache.base import Cache
 import googleapiclient.discovery
 
 
@@ -170,7 +171,7 @@ def create_service():
     """
     Creates the GCP Compute Service.
     """
-    return googleapiclient.discovery.build('compute', 'v1')
+    return googleapiclient.discovery.build('compute', 'v1', cache=MemoryCache())
 
 def create_logger():
     """
@@ -184,3 +185,15 @@ def create_logger():
     # Python logging module
     client.get_default_handler()
     client.setup_logging()
+
+class MemoryCache(Cache):
+    """
+    File-based cache to resolve GCP Cloud Function noisey log entries.
+    """
+    _CACHE = {}
+
+    def get(self, url):
+        return MemoryCache._CACHE.get(url)
+
+    def set(self, url, content):
+        MemoryCache._CACHE[url] = content
