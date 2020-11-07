@@ -33,7 +33,6 @@ def pubsub_trigger(data, context):
 
     # Get image ID from log event
     image_id = log_entry['protoPayload']['resourceName']
-    project_id = log_entry['resource']['labels']['project_id']
 
     # Create the image resource ID
     # Split the image_id into a list of strings
