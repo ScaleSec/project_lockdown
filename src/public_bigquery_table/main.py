@@ -62,7 +62,7 @@ def pubsub_trigger(data, context):
         logging.info(f'Publishing message to Pub/Sub.')
         publish_message(project_id, message)
         if mode == "write":
-            logging.info(f'Lockdown is in write mode. Updating BigQuery table: {table_id} with new table policy."')
+            logging.info(f'Lockdown is in write mode. Updating BigQuery table: {table_id} with new table policy.')
             # Updates BQ table with private table policy
             update_table_policy(new_policy, client, table_ref, table_id)
         if mode == "read":
