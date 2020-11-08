@@ -50,13 +50,13 @@ def pubsub_trigger(data, context):
 
     gce_info = get_gce_info(compute_client, instance_name, zone, project_id)
 
-    gce_sa = eval_gce_info(gce_info, instance_name, zone, project_id)
+    gce_sa = eval_gce_info(gce_info, instance_name, project_id)
 
     if gce_sa:
         # Set our pub/sub message
         message = f"Lockdown is in mode: {mode}. The GCE instance: {instance_name} in project: {project_id} is using the default compute service account."
         # Publish message to Pub/Sub
-        logging.info(f'Publishing message to Pub/Sub.')
+        logging.info("Publishing message to Pub/Sub.")
         publish_message(project_id, message)
         if mode == "write":
             logging.info(f"Lockdown is in write mode. Stopping the GCE instance {instance_name} in project {project_id}.")
@@ -75,10 +75,10 @@ def get_gce_info(compute_client, instance_name, zone, project_id):
     except:
         logging.error(f"Could not get the GCE instance metadata from instance: {instance_name} in project: {project_id}.")
         raise
-    
+
     return gce_info
-    
-def eval_gce_info(gce_info, instance_name, zone, project_id):
+
+def eval_gce_info(gce_info, instance_name, project_id):
     """
     Determine the service account assigned to the GCE instance.
     """
