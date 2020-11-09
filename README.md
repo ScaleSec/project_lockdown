@@ -15,7 +15,7 @@ There are compensating controls like the Organization Policy [constraint](https:
 
 Project Lockdown aims to be a safe, lightweight, and inexpensive tool to increase your security posture.
 
-## How does it work? ##TODO:
+## How does it work?
 Project Lockdown works by using a very efficient data flow that takes advantage of GCP's [Cloud Logging](https://cloud.google.com/logging/docs/basic-concepts) advanced query log sinks. By configuring a filter (query) as specific as possible on the log sink we are able to only invocate a Cloud Function when necessary to remediate events deemed high risk or unsecure. 
 
 When a target event is captured by the log sink it is sent to a Cloud Pub/Sub topic that triggers a Cloud Function automatically. This Cloud Function analyzes the event payload and extracts the data necessary for it to evaluate the current resource's configuration. If the Cloud Function determines that the resource is misconfigured according to its evaluation logic it will remediate the resource and configure it in a safe manner. Typically the action taken by the Cloud Function is a reversal of the event. If a bucket was made public, it is made private. If a firewall rule is created open to the public (0.0.0.0/0), it is removed. 
