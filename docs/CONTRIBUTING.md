@@ -18,4 +18,4 @@ To submit a PR:
 - Verify tests pass successfully by executing `make test` locally. 
 - Commit the code coverage svg in your branch after tests pass.
 
-Once submitted, Github Actions will run automated tests and report back to the PR.
+Once submitted our Github Actions will run automated tests and report back the findings to the PR. If the tests fail, please review the findings and make the appropriate updates. 
