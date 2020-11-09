@@ -48,4 +48,13 @@
 #     log_sink_filter = "protoPayload.serviceName=\"compute.googleapis.com\" protoPayload.request.minTlsVersion=\"TLS_1_0\" protoPayload.methodName=\"v1.compute.sslPolicies.patch\" OR protoPayload.methodName=\"v1.compute.sslPolicies.insert\" AND NOT protoPayload.authenticationInfo.principalEmail"
 #     function_perms = ["logging.logEntries.create", "pubsub.topics.publish", "compute.sslPolicies.update", "compute.sslPolicies.get"],
 #   }
+#   compute_default_sa = {
+#     org_id = "123456",
+#     project = "test_project",
+#     region = "us-east1",
+#     mode   = "read",
+#     name = "gcedefaultsa",
+#     log_sink_filter = "protoPayload.serviceName=\"compute.googleapis.com\" protoPayload.methodName=\"beta.compute.instances.insert\" protoPayload.methodName=\"v1.compute.instances.start\" protoPayload.request.serviceAccounts.email=~\"^\\d{1,12}-compute@developer.gserviceaccount.com$\" AND NOT protoPayload.authenticationInfo.principalEmail"
+#     function_perms = ["logging.logEntries.create", "pubsub.topics.publish", "compute.instances.get", "compute.instances.stop"],
+#   }
 # }
