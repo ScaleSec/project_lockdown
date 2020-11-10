@@ -27,7 +27,7 @@ Trust is a key component of any security tool so we have built Project Lockdown 
 - __Isolated workloads.__ Each use case or Cloud Function has it's own custom role, its own service account and its own separate Pub/Sub topic to receive events. The only shared resource between the different remediation modules is a Pub/Sub topic where you can subscribe to for alerts.
 
 ## Alerting
-Project Lockdown will submit a message to a Pub/Sub topic for each finding it encounters. Slack, SendGrid, JIRA, or even a SIEM can be subscribed to the Pub/Sub topic to receive alerts. Regardless if Project Lockdown is in read or write mode, a message will be published in addition to CLoud Logging events for each action taken.
+Project Lockdown will submit a message to a Pub/Sub topic for each finding it encounters. Slack, SendGrid, JIRA, or even a SIEM can be subscribed to the Pub/Sub topic to receive alerts. Regardless if Project Lockdown is in read or write mode, a message will be published in addition to Cloud Logging events for each action taken.
 
 ## Remediation Scenarios
 For details around what scenarios Project Lockdown remediates, see the [README.md](./src/README.md).
