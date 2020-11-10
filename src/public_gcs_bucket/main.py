@@ -4,8 +4,8 @@ import logging
 
 from os import getenv
 from google.cloud import storage
-from google.cloud import logging as glogging
-from google.cloud import pubsub_v1
+from common.logging import create_logger # pylint: disable=import-error
+from common.pubsub import publish_message # pylint: disable=import-error
 
 def pubsub_trigger(data, context):
     """
@@ -49,6 +49,12 @@ def eval_bucket(bucket_name, policy, bucket, project_id, mode):
     Evaluates a bucket for public access and returns list of public members and roles.
     """
 
+    try:
+        topic_id = getenv('TOPIC_ID')
+    except:
+        logging.error('Topic ID not found in environment variable.')
+
+
     for role in policy:
         # Empty list to add public IAM bindings to
         member_bindings_to_remove = {}
@@ -69,10 +75,15 @@ def eval_bucket(bucket_name, policy, bucket, project_id, mode):
         if member_bindings_to_remove:
             logging.info(f'List of public IAM bindings to remove for role: {role} - {member_bindings_to_remove}.')
             # Set our pub/sub message
-            message = f"Lockdown is in mode: {mode}. Found public members on bucket: {bucket_name} in project: {project_id}. "
+            message = f"Found public members on bucket: {bucket_name} in project: {project_id}."
             # Publish message to Pub/Sub
             logging.info(f'Publishing message to Pub/Sub.')
-            publish_message(project_id, message)
+            try:
+                publish_message(mode, bucket_name, project_id, message, topic_id)
+                logging.info(f'Published message to {topic_id}')
+            except:
+                logging.error(f'Could not publish message to {topic_id}')
+                raise
             # if the function is running in "write" mode, remove public members
             if mode == "write":
                 logging.info('Lockdown is in write mode. Removing public IAM members.')
@@ -82,7 +93,7 @@ def eval_bucket(bucket_name, policy, bucket, project_id, mode):
             if mode == "read":
                 logging.info('Lockdown is in read-only mode. Taking no action.')
         else:
-            logging.info(f'No public members found on bucket {bucket_name}')
+            logging.info(f'No public members found on bucket {bucket_name} with role: {role}.')
 
 def remove_public_iam_members_from_policy(bucket_name, member_bindings_to_remove, bucket, message):
     """
@@ -107,42 +118,3 @@ def remove_public_iam_members_from_policy(bucket_name, member_bindings_to_remove
     except:
         logging.error('Could not update the IAM permissions on bucket: {}.'.format(bucket_name))
         raise
-
-def publish_message(project_id, message):
-    """
-    Publishes message to Pub/Sub topic for integration into alerting system.
-    """
-
-    # Create Pub/Sub Client
-    pub_client = pubsub_v1.PublisherClient()
-
-    try:
-        topic_id = getenv('TOPIC_ID')
-    except:
-        logging.error('Topic ID not found in environment variable.')
-
-    # Create topic object
-    topic = pub_client.topic_path(project_id, topic_id)
-
-    # Pub/Sub messages must be a bytestring
-    data = message.encode("utf-8")
-
-    try:
-        pub_client.publish(topic, data)
-        logging.info(f'Published message to {topic}')
-    except:
-        logging.error(f'Could not publish message to {topic_id}')
-        raise
-
-def create_logger():
-    """
-    Integrates the Cloud Logging handler with the python logging module
-    """
-    # Instantiates a cloud logging client
-    client = glogging.Client()
-
-    # Retrieves a Cloud Logging handler based on the environment
-    # you're running in and integrates the handler with the
-    # Python logging module
-    client.get_default_handler()
-    client.setup_logging()
