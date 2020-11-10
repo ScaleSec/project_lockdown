@@ -108,16 +108,18 @@ def validate_table_policy(table_policy, table_id):
     # table_policy is an IAM Policy class and has the bindings attribute
     for binding in table_policy.bindings:
         # Creates our members list for each IAM binding
-        members = binding.get("members")
+        old_members = binding.get("members")
+        old_members_len = len(old_members)
         # Check to see if there is an IAM policy directly attached to BQ table.
         # Inherited bindings do not display here. Only ones directly attached
-        if members:
+        if old_members:
             # Reference our public users list and remove from members
-            members = {i for i in members if i not in public_users}
+            new_members = {i for i in old_members if i not in public_users}
+            new_members_len = len(new_members)
             # Create a new binding using the same role and updated members list
             new_binding = {
                 "role": binding["role"],
-                "members": sorted(members)
+                "members": new_members
             }
             # Use the same condition on mew IAM binding
             condition = binding.get("condition")
@@ -125,12 +127,19 @@ def validate_table_policy(table_policy, table_id):
                 new_binding["condition"] = condition
             # Add our new binding to the bindings variable for the new policy
             bindings.append(new_binding)
+
+            # set public var to determine if we found pub members or not
+            if old_members_len != new_members_len:
+                public = "true"
         else:
             logging.info(f'No IAM bindings found on BQ table: {table_id}.')
     # Set the new bindings entry using the updated bindings variable
     table_policy.bindings = bindings
 
-    return table_policy
+    if "public" in locals():
+        return table_policy
+    else:
+        logging.info:(f"No public members found on BigQuery table: {table_id}.")
 
 def update_table_policy(new_policy, client, table_ref, table_id):
     """
