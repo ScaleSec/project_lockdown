@@ -59,9 +59,9 @@ def pubsub_trigger(data, context):
     new_policy = eval_iam_policy(policy, image_id, project_id)
 
     if new_policy:
-        finding_type = "public_compute_image"
+        finding_type = "public_gce_image"
         # Set our pub/sub message
-        message = f"Found public members on compute image: {image_id} in project: {project_id}."
+        message = f"Found public members on GCE image: {image_id} in project: {project_id}."
         # Publish message to Pub/Sub
         logging.info(f'Publishing message to Pub/Sub.')
         try:
@@ -71,7 +71,7 @@ def pubsub_trigger(data, context):
             logging.error(f'Could not publish message to {topic_id}')
             raise
         if mode == "write":
-            logging.info(f'Lockdown is in write mode. Updating compute image: {image_id} with new IAM policy."')
+            logging.info(f"Lockdown is in write mode. Updating compute image: {image_id} with new IAM policy.")
             # Updates compute image with private IAM policy
             set_iam_policy(new_policy, compute_client, image_id, project_id)
         if mode == "read":
