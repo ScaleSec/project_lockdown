@@ -54,7 +54,7 @@
 #     region = "us-east1",
 #     mode   = "read",
 #     name = "gcedefaultsa",
-#     log_sink_filter = "protoPayload.serviceName=\"compute.googleapis.com\" protoPayload.methodName=\"beta.compute.instances.insert\" protoPayload.methodName=\"v1.compute.instances.start\" protoPayload.request.serviceAccounts.email=~\"^\\d{1,12}-compute@developer.gserviceaccount.com$\" AND NOT protoPayload.authenticationInfo.principalEmail"
+#     log_sink_filter = "protoPayload.serviceName=\"compute.googleapis.com\" AND ((protoPayload.methodName=\"beta.compute.instances.insert\" AND protoPayload.request.serviceAccounts.email=~\"^\\d{1,12}-compute@developer.gserviceaccount.com$\") OR protoPayload.methodName=\"v1.compute.instances.start\") AND NOT protoPayload.authenticationInfo.principalEmail"
 #     function_perms = ["logging.logEntries.create", "pubsub.topics.publish", "compute.instances.get", "compute.instances.stop"],
 #   }
 # }
