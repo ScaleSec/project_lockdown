@@ -1,7 +1,7 @@
 from google.cloud import pubsub_v1
 import json
 
-def publish_message(mode, resource_id, project_id, message_info, topic_id):
+def publish_message(finding_type, mode, resource_id, project_id, message_info, topic_id):
     """
     Publishes message to Pub/Sub topic for integration into alerting system.
     """
@@ -10,6 +10,7 @@ def publish_message(mode, resource_id, project_id, message_info, topic_id):
     pub_client = pubsub_v1.PublisherClient()
 
     message = {
+        "finding": finding_type,
         "mode": mode,
 		"resourceId": resource_id,
 		"project_id": project_id,
