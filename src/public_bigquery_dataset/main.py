@@ -4,8 +4,8 @@ import logging
 
 from os import getenv
 from google.cloud import bigquery
-from google.cloud import logging as glogging
-from google.cloud import pubsub_v1
+from lockdown_logging import create_logger # pylint: disable=import-error
+from lockdown_pubsub import publish_message # pylint: disable=import-error
 
 def pubsub_trigger(data, context):
     """
@@ -17,6 +17,12 @@ def pubsub_trigger(data, context):
         mode = getenv('MODE')
     except:
         logging.error('Mode not found in environment variable.')
+    
+    # Determine alerting Pub/Sub topic
+    try:
+        topic_id = getenv('TOPIC_ID')
+    except:
+        logging.error('Topic ID not found in environment variable.')
 
     #Create BigQuery Client
     client = bigquery.Client()
@@ -47,11 +53,17 @@ def pubsub_trigger(data, context):
     private_access_entry = eval_dataset(dataset, dataset_log, project_id)
 
     if private_access_entry:
+        finding_type = "public_bigquery_dataset"
         # Set our pub/sub message
-        message = f"Lockdown is in mode: {mode}. Found public members on dataset: {dataset_id} in project: {project_id}."
+        message = f"Found public members on bigquery dataset: {dataset_id} in project: {project_id}."
         # Publish message to Pub/Sub
         logging.info(f'Publishing message to Pub/Sub.')
-        publish_message(project_id, message)
+        try:
+            publish_message(finding_type, mode, dataset_id, project_id, message, topic_id)
+            logging.info(f'Published message to {topic_id}')
+        except:
+            logging.error(f'Could not publish message to {topic_id}')
+            raise
         # if the function is running in "write" mode, remove public members
         if mode == "write":
             logging.info('Lockdown is in write mode. Removing public IAM members from dataset.')
@@ -107,43 +119,3 @@ def update_dataset(client, private_access_entry, dataset_log, dataset):
     except:
         logging.error(f'Failed to update the BigQuery Dataset: {dataset_log}')
         raise
-
-
-def publish_message(project_id, message):
-    """
-    Publishes message to Pub/Sub topic for integration into alerting system.
-    """
-
-    # Create Pub/Sub Client
-    pub_client = pubsub_v1.PublisherClient()
-
-    try:
-        topic_id = getenv('TOPIC_ID')
-    except:
-        logging.error('Topic ID not found in environment variable.')
-
-    # Create topic object
-    topic = pub_client.topic_path(project_id, topic_id)
-
-    # Pub/Sub messages must be a bytestring
-    data = message.encode("utf-8")
-
-    try:
-        pub_client.publish(topic, data)
-        logging.info(f'Published message to {topic}')
-    except:
-        logging.error(f'Could not publish message to {topic_id}')
-        raise
-
-def create_logger():
-    """
-    Integrates the Cloud Logging handler with the python logging module.
-    """
-    # Instantiates a cloud logging client
-    client = glogging.Client()
-
-    # Retrieves a Cloud Logging handler based on the environment
-    # you're running in and integrates the handler with the
-    # Python logging module
-    client.get_default_handler()
-    client.setup_logging()

@@ -54,7 +54,6 @@ def eval_bucket(bucket_name, policy, bucket, project_id, mode):
     except:
         logging.error('Topic ID not found in environment variable.')
 
-
     for role in policy:
         # Empty list to add public IAM bindings to
         member_bindings_to_remove = {}
