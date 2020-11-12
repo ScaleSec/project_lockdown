@@ -1,4 +1,3 @@
-
 #####################
 ## Local variables ##
 #####################
@@ -8,6 +7,19 @@ locals {
   function_name    = "${lower(var.name)}-${var.function_name}_function_${random_id.random.hex}"
   function_sa_name = "${lower(var.name)}-sa"
   log_sink_filter  = "${var.log_sink_filter} = ${google_service_account.cfn_sa.email}"
+  source_files = ["src/${var.function_name}/main.py", "src/${var.function_name}/requirements.txt", "src/${var.function_name}/__init__.py", "src/common/__init__.py", "src/common/lockdown_logging.py", "src/common/lockdown_pubsub.py"]
+
+}
+
+data "template_file" "function_file" {
+  count = length(local.source_files)
+  template = file(element(local.source_files, count.index))
+}
+
+resource "local_file" "to_temp_dir" {
+  count    = length(local.source_files)
+  filename = "${path.module}/temp/${var.function_name}/${basename(element(local.source_files, count.index))}"
+  content  = element(data.template_file.function_file.*.rendered, count.index)
 }
 
 ####################
@@ -76,8 +88,12 @@ resource "google_pubsub_topic_iam_member" "publisher" {
 ## Cloud Function source file
 data "archive_file" "source" {
   type        = "zip"
-  source_dir  = "src/${var.function_name}"
   output_path = "builds/${var.function_name}/${var.function_name}.zip"
+  source_dir  = "${path.module}/temp/${var.function_name}"
+
+  depends_on = [
+    local_file.to_temp_dir,
+  ]
 }
 
 ## Cloud Function source bucket

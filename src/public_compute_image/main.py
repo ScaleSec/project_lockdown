@@ -3,8 +3,8 @@ import json
 import logging
 
 from os import getenv
-from google.cloud import logging as glogging
-from google.cloud import pubsub_v1
+from lockdown_logging import create_logger # pylint: disable=import-error
+from lockdown_pubsub import publish_message # pylint: disable=import-error
 from googleapiclient.discovery_cache.base import Cache
 import googleapiclient.discovery
 
@@ -19,6 +19,12 @@ def pubsub_trigger(data, context):
         mode = getenv('MODE')
     except:
         logging.error('Mode not found in environment variable.')
+    
+    # Determine alerting Pub/Sub topic
+    try:
+        topic_id = getenv('TOPIC_ID')
+    except:
+        logging.error('Topic ID not found in environment variable.')
 
     # Create compute client to make API calls
     compute_client = create_service()
@@ -53,13 +59,19 @@ def pubsub_trigger(data, context):
     new_policy = eval_iam_policy(policy, image_id, project_id)
 
     if new_policy:
+        finding_type = "public_gce_image"
         # Set our pub/sub message
-        message = f"Lockdown is in mode: {mode}. Found public members on compute image: {image_id}."
+        message = f"Found public members on GCE image: {image_id} in project: {project_id}."
         # Publish message to Pub/Sub
-        logging.info('Publishing message to Pub/Sub.')
-        publish_message(project_id, message)
+        logging.info(f'Publishing message to Pub/Sub.')
+        try:
+            publish_message(finding_type, mode, image_id, project_id, message, topic_id)
+            logging.info(f'Published message to {topic_id}')
+        except:
+            logging.error(f'Could not publish message to {topic_id}')
+            raise
         if mode == "write":
-            logging.info(f'Lockdown is in write mode. Updating compute image: {image_id} with new IAM policy."')
+            logging.info(f"Lockdown is in write mode. Updating compute image: {image_id} with new IAM policy.")
             # Updates compute image with private IAM policy
             set_iam_policy(new_policy, compute_client, image_id, project_id)
         if mode == "read":
@@ -141,50 +153,11 @@ def set_iam_policy(new_policy, compute_client, image_id, project_id):
         logging.error(f"Could not update IAM policy on compute image: {image_id} in project: {project_id}.")
         raise
 
-def publish_message(project_id, message):
-    """
-    Publishes message to Pub/Sub topic for integration into alerting system.
-    """
-
-    # Create Pub/Sub Client
-    pub_client = pubsub_v1.PublisherClient()
-
-    try:
-        topic_id = getenv('TOPIC_ID')
-    except:
-        logging.error('Topic ID not found in environment variable.')
-
-    # Create topic object
-    topic = pub_client.topic_path(project_id, topic_id)
-
-    # Pub/Sub messages must be a bytestring
-    data = message.encode("utf-8")
-
-    try:
-        pub_client.publish(topic, data)
-        logging.info(f'Published message to {topic}')
-    except:
-        logging.error(f'Could not publish message to {topic_id}')
-        raise
-
 def create_service():
     """
     Creates the GCP Compute Service.
     """
     return googleapiclient.discovery.build('compute', 'v1', cache=MemoryCache())
-
-def create_logger():
-    """
-    Integrates the Cloud Logging handler with the python logging module.
-    """
-    # Instantiates a cloud logging client
-    client = glogging.Client()
-
-    # Retrieves a Cloud Logging handler based on the environment
-    # you're running in and integrates the handler with the
-    # Python logging module
-    client.get_default_handler()
-    client.setup_logging()
 
 class MemoryCache(Cache):
     """

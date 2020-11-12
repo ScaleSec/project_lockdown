@@ -4,8 +4,8 @@ import logging
 
 from os import getenv
 from google.cloud import bigquery
-from google.cloud import logging as glogging
-from google.cloud import pubsub_v1
+from lockdown_logging import create_logger # pylint: disable=import-error
+from lockdown_pubsub import publish_message # pylint: disable=import-error
 
 def pubsub_trigger(data, context):
     """
@@ -17,6 +17,12 @@ def pubsub_trigger(data, context):
         mode = getenv('MODE')
     except:
         logging.error('Mode not found in environment variable.')
+    
+    # Determine alerting Pub/Sub topic
+    try:
+        topic_id = getenv('TOPIC_ID')
+    except:
+        logging.error('Topic ID not found in environment variable.')
 
     #Create BigQuery Client
     client = bigquery.Client()
@@ -56,11 +62,18 @@ def pubsub_trigger(data, context):
 
     if new_policy:
         logging.info(f'Found public members on BQ table: {table_id}.')
+
+        finding_type = "public_bigquery_table"
         # Set our pub/sub message
-        message = f"Lockdown is in mode: {mode}. Found public members on BigQuery table: {table_id}."
+        message = f"Found public members on BigQuery table: {table_id} in project: {project_id}."
         # Publish message to Pub/Sub
         logging.info(f'Publishing message to Pub/Sub.')
-        publish_message(project_id, message)
+        try:
+            publish_message(finding_type, mode, table_id, project_id, message, topic_id)
+            logging.info(f'Published message to {topic_id}')
+        except:
+            logging.error(f'Could not publish message to {topic_id}')
+            raise
         if mode == "write":
             logging.info(f'Lockdown is in write mode. Updating BigQuery table: {table_id} with new table policy.')
             # Updates BQ table with private table policy
@@ -95,16 +108,18 @@ def validate_table_policy(table_policy, table_id):
     # table_policy is an IAM Policy class and has the bindings attribute
     for binding in table_policy.bindings:
         # Creates our members list for each IAM binding
-        members = binding.get("members")
+        old_members = binding.get("members")
+        old_members_len = len(old_members)
         # Check to see if there is an IAM policy directly attached to BQ table.
         # Inherited bindings do not display here. Only ones directly attached
-        if members:
+        if old_members:
             # Reference our public users list and remove from members
-            members = {i for i in members if i not in public_users}
+            new_members = {i for i in old_members if i not in public_users}
+            new_members_len = len(new_members)
             # Create a new binding using the same role and updated members list
             new_binding = {
                 "role": binding["role"],
-                "members": sorted(members)
+                "members": new_members
             }
             # Use the same condition on mew IAM binding
             condition = binding.get("condition")
@@ -112,12 +127,19 @@ def validate_table_policy(table_policy, table_id):
                 new_binding["condition"] = condition
             # Add our new binding to the bindings variable for the new policy
             bindings.append(new_binding)
+
+            # set public var to determine if we found pub members or not
+            if old_members_len != new_members_len:
+                public = "true"
         else:
             logging.info(f'No IAM bindings found on BQ table: {table_id}.')
     # Set the new bindings entry using the updated bindings variable
     table_policy.bindings = bindings
 
-    return table_policy
+    if "public" in locals():
+        return table_policy
+    else:
+        logging.info:(f"No public members found on BigQuery table: {table_id}.")
 
 def update_table_policy(new_policy, client, table_ref, table_id):
     """
@@ -131,41 +153,3 @@ def update_table_policy(new_policy, client, table_ref, table_id):
         logging.error(f'Cannot update BQ table: {table_id}.')
         raise
 
-def publish_message(project_id, message):
-    """
-    Publishes message to Pub/Sub topic for integration into alerting system.
-    """
-
-    # Create Pub/Sub Client
-    pub_client = pubsub_v1.PublisherClient()
-
-    try:
-        topic_id = getenv('TOPIC_ID')
-    except:
-        logging.error('Topic ID not found in environment variable.')
-
-    # Create topic object
-    topic = pub_client.topic_path(project_id, topic_id)
-
-    # Pub/Sub messages must be a bytestring
-    data = message.encode("utf-8")
-
-    try:
-        pub_client.publish(topic, data)
-        logging.info(f'Published message to {topic}')
-    except:
-        logging.error(f'Could not publish message to {topic_id}')
-        raise
-
-def create_logger():
-    """
-    Integrates the Cloud Logging handler with the python logging module.
-    """
-    # Instantiates a cloud logging client
-    client = glogging.Client()
-
-    # Retrieves a Cloud Logging handler based on the environment
-    # you're running in and integrates the handler with the
-    # Python logging module
-    client.get_default_handler()
-    client.setup_logging()
