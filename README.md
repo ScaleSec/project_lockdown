@@ -18,7 +18,7 @@ Project Lockdown aims to be a safe, lightweight, and inexpensive tool to increas
 ## How does it work?
 Project Lockdown works by using a very efficient data flow that takes advantage of GCP's [Cloud Logging](https://cloud.google.com/logging/docs/basic-concepts) advanced query log sinks. By configuring a filter (query) as specific as possible on the log sink we are able to only invocate a Cloud Function when necessary to remediate events deemed high risk or unsecure. 
 
-When a target event is captured by the log sink it is sent to a Cloud Pub/Sub topic that triggers a Cloud Function automatically. This Cloud Function analyzes the event payload and extracts the data necessary for it to evaluate the current resource's configuration. If the Cloud Function determines that the resource is misconfigured according to its evaluation logic it will remediate the resource and configure it in a safe manner. Typically the action taken by the Cloud Function is a reversal of the event. If a bucket was made public, it is made private. If a firewall rule is created open to the public (0.0.0.0/0), it is removed. 
+When a target event is captured by the log sink it is sent to a Cloud Pub/Sub topic that triggers a Cloud Function automatically. This Cloud Function analyzes the event payload and extracts the data necessary for it to evaluate the current resource's configuration. If the Cloud Function determines that the resource is misconfigured according to its evaluation logic it will remediate the resource and configure it in a safe manner. Typically the action taken by the Cloud Function is a reversal of the event. If a bucket was made public, it is made private. If a SSL policy is created using `TLS 1.0`, it will be updated to `TLS 1.1`. 
 
 ## How can I trust this?
 Trust is a key component of any security tool so we have built Project Lockdown with that in mind. A few examples of this are:
@@ -62,7 +62,7 @@ Project Lockdown is able to deploy many different remediation functions and thei
 
 To configure Terraform for a deployment:
 
-- Copy `terraform.tfvars` into a file that ends in `.auto.tfvars` and edit the `enabled_modules` variable as desired.
+- Copy `terraform.tfvars` into a file that ends in `.auto.tfvars` and edit the `enabled_modules` variable as desired (remember to uncomment the necessary lines).
 - To enable automatic remediation, be sure to set the `mode` variable as `write`
 - We do not recommend updating the variables `log_sink_filter` or `function_perms` because those have been tailored to work with Project Lockdown. 
 
