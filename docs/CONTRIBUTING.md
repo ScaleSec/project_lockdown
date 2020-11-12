@@ -11,6 +11,7 @@ Please read through this document before submitting any issues or pull requests 
 
 ## Submitting a Pull Request
 
+- Please open a GitHub issue before working on any new functionality for Project Lockdown and then tie the Pull Request to the issue.
 - We request that you [fork](https://docs.github.com/en/free-pro-team@latest/github/getting-started-with-github/fork-a-repo) Project Lockdown and then submit a Pull Request on your fork. This helps us better review open PRs, expedite the review process, and keep the repository clean by not having stale branches.
 - Each Pull Request requires two approvals from code owners.
 
