@@ -44,7 +44,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          module_dir=$(ls -d src/*)
+          cd src
+          module_dir=$(ls -d */)
           pip install wheel coverage coverage-badge
           for dir in $module_dir; do cd "$dir" || exit 1; pip install -r requirements.txt; cd ../.. || exit 1; done
 
