@@ -16,15 +16,15 @@ There are compensating controls like the Organization Policy [constraint](https:
 Project Lockdown aims to be a safe, lightweight, and inexpensive tool to increase your security posture.
 
 ## How does it work?
-Project Lockdown works by using a very efficient data flow that takes advantage of GCP's [Cloud Logging](https://cloud.google.com/logging/docs/basic-concepts) advanced query log sinks. By configuring a filter (query) as specific as possible on the log sink we are able to only invocate a Cloud Function when necessary to remediate events deemed high risk or unsecure. 
+Project Lockdown works by using a very efficient data flow that takes advantage of GCP's [Cloud Logging](https://cloud.google.com/logging/docs/basic-concepts) advanced query log sinks. By configuring a filter (query) as specific as possible on the log sink Project Lockdown will only invocate a Cloud Function when necessary to remediate events deemed high risk or unsecure. 
 
-When a target event is captured by the log sink it is sent to a Cloud Pub/Sub topic that triggers a Cloud Function automatically. This Cloud Function analyzes the event payload and extracts the data necessary for it to evaluate the current resource's configuration. If the Cloud Function determines that the resource is misconfigured according to its evaluation logic it will remediate the resource and configure it in a safe manner. Typically the action taken by the Cloud Function is a reversal of the event. If a bucket was made public, it is made private. If a SSL policy is created using `TLS 1.0`, it will be updated to `TLS 1.1`. 
+When a target event is captured by the log sink it is sent to a Cloud Pub/Sub topic that triggers a Cloud Function automatically. This Cloud Function analyzes the event payload and extracts the data necessary for it to evaluate the current resource's configuration. If the Cloud Function determines that the resource is misconfigured according to its evaluation logic it will remediate the resource and reconfigure it in a safe manner. Typically, the action taken by the Cloud Function is a reversal of the event. If a bucket was made public, it is made private, but if a SSL policy is created using `TLS 1.0`, it will be updated to `TLS 1.1`. 
 
 ## How can I trust this?
-Trust is a key component of any security tool so we have built Project Lockdown with that in mind. A few examples of this are:
+Trust is a key component of any security tool so Project Lockdown is built with that in mind. A few examples of this are:
 - __Least privilege access.__ The Cloud Function that performs actions in your environment has only the permissions it needs to perform its programmed actions. No predefined roles are used and only custom purpose-driven roles are assigned.
 - __Read-only by default.__ Project Lockdown will not take action in your environment unless you configure it to do so. Out of the box Project Lockdown is read only.
-- __Isolated workloads.__ Each use case or Cloud Function has it's own custom role, its own service account and its own separate Pub/Sub topic to receive events. The only shared resource between the different remediation modules is a Pub/Sub topic where you can subscribe to for alerts.
+- __Isolated workloads.__ Each remediation use case or Cloud Function has it's own custom role, its own service account and its own separate Pub/Sub topic to receive events. The only shared resource between the different remediation modules is a Pub/Sub topic where you can subscribe to for alerts.
 
 ## Alerting
 Project Lockdown will submit a message to a Pub/Sub topic for each finding it encounters. Slack, SendGrid, JIRA, or even a SIEM can be subscribed to the Pub/Sub topic to receive alerts. Regardless if Project Lockdown is in read or write mode, a message will be published in addition to Cloud Logging events for each action taken.
@@ -40,7 +40,7 @@ We welcome any questions, bug reports, feature requests or enhancements via a Gi
 
 ### Modes
 
-Project Lockdown has the capability to run in two modes: `read` and `write`. In `write` mode, lockdown will automatically remediate the findings it discovers. Both `read` and `write` modes will send an alert to a Pub/Sub topic to integrate into your alerting process.
+Project Lockdown has the capability to run in two modes: `read` and `write`. In `write` mode, Project Lockdown will automatically remediate the findings it discovers. Both `read` and `write` modes will send an alert to a Pub/Sub topic to integrate into your alerting process.
 
 ### Requirements
 
@@ -58,7 +58,7 @@ make test
 
 ### Terraform
 
-Project Lockdown is able to deploy many different remediation functions and their accompanying resources using the module `for_each` functionality. This allows us to only specify one `main.tf` in the [terraform](./terraform) directory but deploy as many copies as there are entries in the variable `enabled_modules`.
+Project Lockdown is able to deploy many different remediation functions and their accompanying resources using the [module](https://learn.hashicorp.com/tutorials/terraform/for-each) `for_each` functionality. This allows us to only specify one `main.tf` in the [terraform](./terraform) directory but deploy as many copies as there are entries in the variable `enabled_modules`.
 
 To configure Terraform for a deployment:
 
