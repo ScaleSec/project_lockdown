@@ -18,7 +18,7 @@ data "template_file" "function_file" {
 
 resource "local_file" "to_temp_dir" {
   count    = length(local.source_files)
-  filename = "${path.module}/temp/${basename(element(local.source_files, count.index))}"
+  filename = "${path.module}/temp/${var.function_name}/${basename(element(local.source_files, count.index))}"
   content  = element(data.template_file.function_file.*.rendered, count.index)
 }
 
@@ -89,7 +89,7 @@ resource "google_pubsub_topic_iam_member" "publisher" {
 data "archive_file" "source" {
   type        = "zip"
   output_path = "builds/${var.function_name}/${var.function_name}.zip"
-  source_dir  = "${path.module}/temp"
+  source_dir  = "${path.module}/temp/${var.function_name}"
 
   depends_on = [
     local_file.to_temp_dir,
