@@ -17,7 +17,7 @@ def pubsub_trigger(data, context):
         mode = getenv('MODE')
     except:
         logging.error('Mode not found in environment variable.')
-    
+
     # Determine alerting Pub/Sub topic
     try:
         topic_id = getenv('TOPIC_ID')
@@ -37,21 +37,12 @@ def pubsub_trigger(data, context):
     log_entry = json.loads(data_buffer)
 
     # Get dataset ID and project ID from log event
-    dataset_id = log_entry['protoPayload']['resourceName']
+    dataset_log = log_entry['resource']['labels']['dataset_id']
     project_id = log_entry['resource']['labels']['project_id']
-    # resource_id is passed to Pub/Sub 
-    resource_id = dataset_id
 
     # Create the fully-qualified dataset ID in standard SQL format
-    # Split the dataset_id into a list of strings
-    dataset_list = dataset_id.split('/')
-    # Set our list of strings to remove
-    remove_strings = ["projects", "datasets"]
-    # Remove all strings in list to create a list of dataset_id values
-    dataset_id = [i for i in dataset_list if i not in remove_strings]
-    dataset_name = dataset_id[1]
-    # Create the fully-qualified dataset ID in standard SQL format using the leftover values
-    dataset_id = '.'.join(dataset_id)
+    data_vars = [project_id, dataset_log]
+    dataset_id = '.'.join(data_vars)
 
     try:
         # Create Dataset object
@@ -60,16 +51,16 @@ def pubsub_trigger(data, context):
         logging.info(f'Could not access BigQuery Dataset {dataset_id}')
 
     # Evaluate the dataset
-    private_access_entry = eval_dataset(dataset, dataset_name, project_id)
+    private_access_entry = eval_dataset(dataset, dataset_log, project_id)
 
     if private_access_entry:
         finding_type = "public_bigquery_dataset"
         # Set our pub/sub message
-        message = f"Found public members on bigquery dataset: {dataset_name} in project: {project_id}."
+        message = f"Found public members on bigquery dataset: {dataset_log} in project: {project_id}."
         # Publish message to Pub/Sub
-        logging.info(f'Publishing message to Pub/Sub.')
+        logging.info('Publishing message to Pub/Sub.')
         try:
-            publish_message(finding_type, mode, resource_id, project_id, message, topic_id)
+            publish_message(finding_type, mode, dataset_log, project_id, message, topic_id)
             logging.info(f'Published message to {topic_id}')
         except:
             logging.error(f'Could not publish message to {topic_id}')
@@ -78,15 +69,15 @@ def pubsub_trigger(data, context):
         if mode == "write":
             logging.info('Lockdown is in write mode. Removing public IAM members from dataset.')
             # Remove public members
-            update_dataset(client, private_access_entry, dataset_name, dataset)
+            update_dataset(client, private_access_entry, dataset_id, dataset)
         # if function is in read mode, take no action and publish message to pub/sub
         if mode == "read":
             logging.info('Lockdown is in read-only mode. Taking no action.')
     else:
-        logging.info(f'No public members found. Taking no action on BigQuery dataset: {dataset_name}')
+        logging.info(f'No public members found. Taking no action on BigQuery dataset: {dataset_id}')
 
 
-def eval_dataset(dataset, dataset_name, project_id):
+def eval_dataset(dataset, dataset_log, project_id):
     """
     Check the BigQuery Dataset Access Entries to see if public members exist.
     """
@@ -101,21 +92,21 @@ def eval_dataset(dataset, dataset_name, project_id):
         # Convert each Access Entry into a dictionary
         entry_dict = entry.to_api_repr()
         if public_user1.items() <= entry_dict.items():
-            logging.info(f"Public IAM member: allUsers found on dataset: {dataset_name} in project: {project_id}.")
+            logging.info(f"Public IAM member: allUsers found on dataset: {dataset_log} in project: {project_id}.")
         elif public_user2.items() <= entry_dict.items():
-            logging.info(f"Public IAM member: allAuthenticatedUsers found on dataset: {dataset_name} in project: {project_id}.")
+            logging.info(f"Public IAM member: allAuthenticatedUsers found on dataset: {dataset_log} in project: {project_id}.")
         else:
             private_access_entry.append(entry)
-    
+
     # Compare Original Access Entry to new by looking at their lengths
     private_access_list = list(private_access_entry)
     if len(access_entries_list) != len(private_access_list):
-        logging.info(f'Public IAM members found on dataset: {dataset_name} in project: {project_id}. A new BigQuery Dataset private Access Entry list is ready to be applied.')
+        logging.info(f'Public IAM members found on dataset: {dataset_log} in project: {project_id}. A new BigQuery Dataset private Access Entry list is ready to be applied.')
         return private_access_entry
     else:
-        logging.info(f"No public IAM members found. BigQuery Dataset: {dataset_name} is private.")
+        logging.info(f"No public IAM members found. BigQuery Dataset: {dataset_log} is private.")
 
-def update_dataset(client, private_access_entry, dataset_name, dataset):
+def update_dataset(client, private_access_entry, dataset_id, dataset):
     """
     Updates the Public BigQuery Dataset with a new access entry list.
     """
@@ -124,8 +115,8 @@ def update_dataset(client, private_access_entry, dataset_name, dataset):
     dataset.access_entries = private_access_entry
 
     try:
-        client.update_dataset(dataset, ["access_entries"]) 
-        logging.info(f'The BigQuery Dataset: {dataset_name} has been updated.')
+        client.update_dataset(dataset, ["access_entries"])
+        logging.info(f'The BigQuery Dataset: {dataset_id} has been updated.')
     except:
-        logging.error(f'Failed to update the BigQuery Dataset: {dataset_name}')
+        logging.error(f'Failed to update the BigQuery Dataset: {dataset_id}')
         raise
