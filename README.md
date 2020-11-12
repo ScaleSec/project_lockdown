@@ -77,3 +77,8 @@ __Note: Functions not specified in `enabled_modules` will not be created and wil
 | region | The region to deploy lockdown resources to. | `string` | `"us-east1"` | no |
 | topic\_name | The Pub/Sub topic to send messages to when a finding is generated. | `string` | `"project_lockdown_alert_topic"` | no |
 | topic\_project | The project to deploy the alert Pub/Sub topic to. | `string` | n/a | yes |
+
+
+## Limitation of Liability
+
+Please view the [License](LICENSE) for limitations of liability. 
