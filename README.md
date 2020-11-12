@@ -62,7 +62,7 @@ Project Lockdown is able to deploy many different remediation functions and thei
 
 To configure Terraform for a deployment:
 
-- Copy `terraform.tfvars` into a file that ends in `.auto.tfvars` and edit the `enabled_modules` variable as desired.
+- Copy `terraform.tfvars` into a file that ends in `.auto.tfvars` and edit the `enabled_modules` variable as desired (remember to uncomment the necessary lines).
 - To enable automatic remediation, be sure to set the `mode` variable as `write`
 - We do not recommend updating the variables `log_sink_filter` or `function_perms` because those have been tailored to work with Project Lockdown. 
 
