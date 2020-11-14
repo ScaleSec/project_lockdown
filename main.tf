@@ -14,7 +14,6 @@
 resource "google_pubsub_topic" "alerting_topic" {
   name    = var.topic_name
   project = var.topic_project
-
 }
 
 module "function" {
