@@ -2,6 +2,9 @@
 # Example config
 ##################
 
+
+# project_id = "project123"
+
 # enabled_modules = {
 #   public_bigquery_dataset = {
 #     org_id = "123456",

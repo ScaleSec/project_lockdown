@@ -13,7 +13,22 @@
 
 resource "google_pubsub_topic" "alerting_topic" {
   name    = var.topic_name
-  project = var.topic_project
+  project = var.project_id
+}
+
+module "project-services" {
+  source  = "terraform-google-modules/project-factory/google//modules/project_services"
+  version = "4.0.0"
+
+  project_id                  = var.project_id
+
+  activate_apis = [
+    "iam.googleapis.com",
+    "cloudfunctions.googleapis.com",
+    "storage.googleapis.com",
+    "pubsub.googleapis.com"
+  ]
+  disable_services_on_destroy = false
 }
 
 module "function" {

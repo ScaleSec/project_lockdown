@@ -8,7 +8,7 @@ variable "enabled_modules" {
   type        = any
 }
 
-variable "topic_project" {
+variable "project_id" {
   description = "The project to deploy the alert Pub/Sub topic to."
   type        = string
 }
