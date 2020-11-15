@@ -33,7 +33,7 @@ Project Lockdown will submit a message to a Pub/Sub topic for each finding it en
 For details around what scenarios Project Lockdown remediates, see the [README.md](./src/README.md).
 
 ## Can I contribute or request features?
-We welcome any questions, bug reports, feature requests or enhancements via a GitHub Issue or Pull Request. If you plan to contribute to Project Lockdown please follow our [Contribution Guidelines](docs/CONTRIBUTING.md) for suggestions and requirements.
+Project Lockdown is under active development and we welcome any questions, bug reports, feature requests or enhancements via a GitHub Issue or Pull Request. If you plan to contribute to Project Lockdown please follow our [Contribution Guidelines](docs/CONTRIBUTING.md) for suggestions and requirements.
 
 
 ## Usage 
