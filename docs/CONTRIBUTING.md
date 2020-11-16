@@ -20,3 +20,6 @@ To submit a PR:
 - Commit the code coverage svg in your branch after tests pass.
 
 Once submitted our Github Actions will run automated tests and report back the findings to the PR. If the tests fail, please review the findings and make the appropriate updates. 
+
+## Development 
+Please see our [development guide](DEVELOPMENT.md) for instructions on how to create remediation Cloud Functions.
