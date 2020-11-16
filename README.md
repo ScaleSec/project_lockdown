@@ -65,7 +65,7 @@ To configure Terraform for a deployment:
 - Copy `terraform.tfvars` into a file that ends in `.auto.tfvars` and edit the `enabled_modules` variable as desired (remember to uncomment the necessary lines).
 - To enable automatic remediation, be sure to set the `mode` variable as `write`
 - We do not recommend updating the variables `log_sink_filter` or `function_perms` because those have been tailored to work with Project Lockdown. 
-
+- We DO recommend deploying all Lockdown resources into an isolated security project, including the Pub/Sub topic for alerts.
 
 __Note: Functions not specified in `enabled_modules` will not be created and will be skipped.__
 
@@ -74,9 +74,9 @@ __Note: Functions not specified in `enabled_modules` will not be created and wil
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | enabled\_modules | A mapping of enabled modules and their variables | `any` | n/a | yes |
+| project\_id | The project to deploy the alert Pub/Sub topic to. | `string` | n/a | yes |
 | region | The region to deploy lockdown resources to. | `string` | `"us-east1"` | no |
 | topic\_name | The Pub/Sub topic to send messages to when a finding is generated. | `string` | `"project_lockdown_alert_topic"` | no |
-| topic\_project | The project to deploy the alert Pub/Sub topic to. | `string` | n/a | yes |
 
 
 ## Limitation of Liability
