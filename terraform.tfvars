@@ -60,4 +60,13 @@
 #     log_sink_filter = "protoPayload.serviceName=\"compute.googleapis.com\" AND ((protoPayload.methodName=\"beta.compute.instances.insert\" AND protoPayload.request.serviceAccounts.email=~\"^\\d{1,12}-compute@developer.gserviceaccount.com$\") OR protoPayload.methodName=\"v1.compute.instances.start\") AND NOT protoPayload.authenticationInfo.principalEmail"
 #     function_perms = ["logging.logEntries.create", "pubsub.topics.publish", "compute.instances.get", "compute.instances.stop"],
 #   }
+#   legacy_gke_abac = {
+#     org_id = "123456",
+#     project = "test_project",
+#     region = "us-east1",
+#     mode   = "read",
+#     name = "gkeabac",
+#     log_sink_filter = "(protoPayload.methodName=\"google.container.v1beta1.ClusterManager.CreateCluster\" AND operation.first=\"true\") OR (protoPayload.methodName=\"google.container.v1.ClusterManager.SetLegacyAbac\" AND protoPayload.request.enabled=\"true\") AND NOT protoPayload.authenticationInfo.principalEmail"
+#     function_perms = ["logging.logEntries.create", "pubsub.topics.publish", "container.clusters.get", "container.clusters.update"],
+#   }
 # }
