@@ -117,7 +117,7 @@ resource "google_cloudfunctions_function" "cfn" {
   available_memory_mb   = 128
   source_archive_bucket = google_storage_bucket.cfn_bucket.name
   source_archive_object = google_storage_bucket_object.cfn_source_archive.name
-  timeout               = 60
+  timeout               = 300
   entry_point           = "pubsub_trigger"
   service_account_email = google_service_account.cfn_sa.email
   runtime               = "python38"
