@@ -18,3 +18,15 @@ variable "topic_name" {
   default     = "project_lockdown_alert_topic"
   type        = string
 }
+
+variable "allowlist" {
+  description = "An allowlist of project IDs that should not have their action reverted."
+  type = string
+  default = "12345, 123"
+}
+
+variable "mode" {
+  type        = string
+  default     = "read"
+  description = "The mode to run lockdown in, either read or write."
+}

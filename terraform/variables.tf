@@ -41,3 +41,8 @@ variable "topic_id" {
   type        = string
   description = "The Pub/Sub topic ID to send alerts to."
 }
+
+variable "allowlist" {
+  description = "An allowlist of project IDs that should not have their action reverted."
+  type = string
+}

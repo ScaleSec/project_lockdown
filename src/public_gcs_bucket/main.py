@@ -4,8 +4,10 @@ import logging
 
 from os import getenv
 from google.cloud import storage
+
 from lockdown_logging import create_logger # pylint: disable=import-error
 from lockdown_pubsub import publish_message # pylint: disable=import-error
+from lockdown_allowlist import check_allowlist # pylint: disable=import-error
 
 def pubsub_trigger(data, context):
     """
@@ -69,19 +71,23 @@ def eval_bucket(bucket_name, policy, bucket, project_id, mode):
                 logging.info(f'Found public member: {member} with role: {role} on bucket: {bucket_name} in project: {project_id}.')
             else:
                 logging.info(f'Member {member} with role {role} is not public.')
-        # If there are public members, check the cloudfunctions mode
         if member_bindings_to_remove:
             # If we have public members, we set this variable to trigger our Pub/Sub message publish
             public = "true"
             logging.info(f'List of public IAM bindings to remove for role: {role} - {member_bindings_to_remove}.')
-            # if the function is running in "write" mode, remove public members
-            if mode == "write":
-                logging.info('Lockdown is in write mode. Removing public IAM members.')
-                # Removes the public IAM bindings from the bucket for this specific role
-                remove_public_iam_members_from_policy(bucket_name, member_bindings_to_remove, bucket)
-            # if function is in read mode, take no action and publish message to pub/sub
-            if mode == "read":
-                logging.info('Lockdown is in read-only mode. Taking no action.')
+            # Check our project_id against the allowlist set at deployment
+            if check_allowlist(project_id):
+                logging.info(f'The project {project_id} is in the allowlist. No action being taken.')
+            else:
+                logging.info(f'The project {project_id} is not in the allowlist.')
+                # if the function is running in "write" mode, remove public members
+                if mode == "write":
+                    logging.info('Lockdown is in write mode. Removing public IAM members.')
+                    # Removes the public IAM bindings from the bucket for this specific role
+                    remove_public_iam_members_from_policy(bucket_name, member_bindings_to_remove, bucket)
+                # if function is in read mode, take no action and publish message to pub/sub
+                if mode == "read":
+                    logging.info('Lockdown is in read-only mode. Taking no action.')
         else:
             logging.info(f'No public members found on bucket {bucket_name} with role: {role}.')
 
@@ -90,7 +96,7 @@ def eval_bucket(bucket_name, policy, bucket, project_id, mode):
         # Set our pub/sub message
         message = f"Found public members on bucket: {bucket_name} in project: {project_id}."
         # Publish message to Pub/Sub
-        logging.info(f'Publishing message to Pub/Sub.')
+        logging.info('Publishing message to Pub/Sub.')
         try:
             publish_message(finding_type, mode, bucket_name, project_id, message, topic_id)
             logging.info(f'Published message to {topic_id}')

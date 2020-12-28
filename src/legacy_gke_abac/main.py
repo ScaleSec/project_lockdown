@@ -9,6 +9,8 @@ from google.api_core import retry
 
 from lockdown_logging import create_logger # pylint: disable=import-error
 from lockdown_pubsub import publish_message # pylint: disable=import-error
+from lockdown_allowlist import check_allowlist # pylint: disable=import-error
+
 
 def pubsub_trigger(data, context):
     """

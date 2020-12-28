@@ -7,7 +7,7 @@ locals {
   function_name    = "${lower(var.name)}-${var.function_name}_function_${random_id.random.hex}"
   function_sa_name = "${lower(var.name)}-sa"
   log_sink_filter  = "${var.log_sink_filter} = ${google_service_account.cfn_sa.email}"
-  source_files     = ["src/${var.function_name}/main.py", "src/${var.function_name}/requirements.txt", "src/${var.function_name}/__init__.py", "src/common/__init__.py", "src/common/lockdown_logging.py", "src/common/lockdown_pubsub.py"]
+  source_files     = ["src/${var.function_name}/main.py", "src/${var.function_name}/requirements.txt", "src/${var.function_name}/__init__.py", "src/common/__init__.py", "src/common/lockdown_logging.py", "src/common/lockdown_pubsub.py", "src/common/lockdown_allowlist.py"]
 
 }
 
@@ -130,5 +130,6 @@ resource "google_cloudfunctions_function" "cfn" {
   environment_variables = {
     MODE     = var.mode
     TOPIC_ID = var.topic_id
+    ALLOWLIST = var.allowlist
   }
 }
