@@ -17,9 +17,9 @@ resource "google_pubsub_topic" "alerting_topic" {
 }
 
 module "project-services" {
-  for_each      = var.enabled_modules
-  source  = "terraform-google-modules/project-factory/google//modules/project_services"
-  version = "4.0.0"
+  for_each = var.enabled_modules
+  source   = "terraform-google-modules/project-factory/google//modules/project_services"
+  version  = "4.0.0"
 
   project_id = lookup(each.value, "lockdown_project")
 
@@ -37,14 +37,14 @@ module "function" {
   source        = "./terraform"
   function_name = each.key
 
-  org_id          = var.org_id
-  lockdown_project         = lookup(each.value, "lockdown_project")
-  region          = lookup(each.value, "region", var.region)
-  mode            = lookup(each.value, "mode", var.mode)
-  name            = lookup(each.value, "name")
-  log_sink_filter = lookup(each.value, "log_sink_filter")
-  function_perms  = lookup(each.value, "function_perms")
-  topic_id        = google_pubsub_topic.alerting_topic.name
-  project_list  = lookup(each.value, "allowlist", var.project_list)
-  list_type = lookup(each.value, "allowlist", var.list_type)
+  org_id           = var.org_id
+  lockdown_project = lookup(each.value, "lockdown_project")
+  region           = lookup(each.value, "region", var.region)
+  mode             = lookup(each.value, "mode", var.mode)
+  name             = lookup(each.value, "name")
+  log_sink_filter  = lookup(each.value, "log_sink_filter")
+  function_perms   = lookup(each.value, "function_perms")
+  topic_id         = google_pubsub_topic.alerting_topic.name
+  project_list     = lookup(each.value, "allowlist", var.project_list)
+  list_type        = lookup(each.value, "allowlist", var.list_type)
 }

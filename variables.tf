@@ -31,12 +31,12 @@ variable "org_id" {
 
 variable "list_type" {
   description = "The type of list being passed in to the Cloud Function. The choices are allow, deny, or N/A (for none)."
-  type = string
-  default = "N/A"
+  type        = string
+  default     = "N/A"
 }
 
 variable "project_list" {
   description = "A list of project IDs to use as a denylist or allowlist."
-  type = string
-  default = "N/A"
+  type        = string
+  default     = "N/A"
 }

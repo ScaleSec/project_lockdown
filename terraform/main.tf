@@ -128,9 +128,9 @@ resource "google_cloudfunctions_function" "cfn" {
   }
 
   environment_variables = {
-    MODE     = var.mode
-    TOPIC_ID = var.topic_id
+    MODE         = var.mode
+    TOPIC_ID     = var.topic_id
     PROJECT_LIST = var.project_list
-    LIST_TYPE = var.list_type
+    LIST_TYPE    = var.list_type
   }
 }
