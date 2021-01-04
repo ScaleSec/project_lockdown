@@ -43,7 +43,7 @@ variable "topic_id" {
 }
 
 variable "list_type" {
-  description = "The type of list being passed in to the Cloud Function. The choices are allow, deny, or False."
+  description = "The type of list being passed in to the Cloud Function. The choices are allow, deny, or N/A."
   type = string
 }
 
