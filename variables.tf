@@ -8,7 +8,7 @@ variable "enabled_modules" {
   type        = any
 }
 
-variable "project_id" {
+variable "alert_topic_project_id" {
   description = "The project to deploy the alert Pub/Sub topic to."
   type        = string
 }
@@ -29,4 +29,8 @@ variable "mode" {
   type        = string
   default     = "read"
   description = "The mode to run lockdown in, either read or write."
+}
+
+variable "org_id" {
+  description = "The Organization ID to monitor."
 }
