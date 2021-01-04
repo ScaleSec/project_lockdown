@@ -6,7 +6,8 @@
 # alert_topic_project_id = "security_project"
 # org_id                 = "1234567890"
 # mode                   = "read"
-# allowlist              = "project123, projectabc"
+# project_list           = "project123,projectabc"
+# list_type              = "allow"
 
 # enabled_modules = {
 #   public_bigquery_dataset = {

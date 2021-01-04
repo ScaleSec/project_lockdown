@@ -19,12 +19,6 @@ variable "topic_name" {
   type        = string
 }
 
-variable "allowlist" {
-  description = "An allowlist of project IDs that should not have their action reverted."
-  type = string
-  default = "12345, 123"
-}
-
 variable "mode" {
   type        = string
   default     = "read"
@@ -33,4 +27,16 @@ variable "mode" {
 
 variable "org_id" {
   description = "The Organization ID to monitor."
+}
+
+variable "list_type" {
+  description = "The type of list being passed in to the Cloud Function. The choices are allow, deny, or False (for none)."
+  type = string
+  default = "N/A"
+}
+
+variable "project_list" {
+  description = "A list of project IDs to use as a denylist or allowlist."
+  type = string
+  default = "N/A"
 }

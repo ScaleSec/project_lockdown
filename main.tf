@@ -45,5 +45,6 @@ module "function" {
   log_sink_filter = lookup(each.value, "log_sink_filter")
   function_perms  = lookup(each.value, "function_perms")
   topic_id        = google_pubsub_topic.alerting_topic.name
-  allowlist  = lookup(each.value, "allowlist", var.allowlist)
+  project_list  = lookup(each.value, "allowlist", var.project_list)
+  list_type = lookup(each.value, "allowlist", var.list_type)
 }

@@ -7,7 +7,7 @@ from google.cloud import storage
 
 from lockdown_logging import create_logger # pylint: disable=import-error
 from lockdown_pubsub import publish_message # pylint: disable=import-error
-from lockdown_allowlist import check_allowlist # pylint: disable=import-error
+from lockdown_checklist import check_list # pylint: disable=import-error
 
 def pubsub_trigger(data, context):
     """
@@ -33,18 +33,23 @@ def pubsub_trigger(data, context):
     bucket_name = log_entry['resource']['labels']['bucket_name']
     project_id = log_entry['resource']['labels']['project_id']
 
-    # Configuring storage client
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(bucket_name)
+    # Check our project_id against the project list set at deployment
+    if check_list(project_id):
+        logging.info(f'The project {project_id} is not in the allowlist, is in the denylist, or a list is not specified. Continuing evaluation.')
+        # Configuring storage client
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(bucket_name)
 
-    # Get the current GCS bucket policy
-    try:
-        policy = bucket.get_iam_policy()
-    except:
-        logging.error(f'Could not view bucket: {bucket_name} IAM policy.')
+        # Get the current GCS bucket policy
+        try:
+            policy = bucket.get_iam_policy()
+        except:
+            logging.error(f'Could not view bucket: {bucket_name} IAM policy.')
 
-    # Evaluating GCS bucket policy for public bindings
-    eval_bucket(bucket_name, policy, bucket, project_id, mode)
+        # Evaluating GCS bucket policy for public bindings
+        eval_bucket(bucket_name, policy, bucket, project_id, mode)
+    else:
+        logging.info(f'The project {project_id} is in the allowlist or is not in the denylist. No action being taken.')
 
 def eval_bucket(bucket_name, policy, bucket, project_id, mode):
     """
@@ -59,10 +64,8 @@ def eval_bucket(bucket_name, policy, bucket, project_id, mode):
     for role in policy:
         # Empty list to add public IAM bindings to
         member_bindings_to_remove = {}
-
         # For each IAM binding, find the members
         members = policy[role]
-
         # For every member, check if they are public
         for member in members:
             if member == "allAuthenticatedUsers" or member == "allUsers":
@@ -75,19 +78,14 @@ def eval_bucket(bucket_name, policy, bucket, project_id, mode):
             # If we have public members, we set this variable to trigger our Pub/Sub message publish
             public = "true"
             logging.info(f'List of public IAM bindings to remove for role: {role} - {member_bindings_to_remove}.')
-            # Check our project_id against the allowlist set at deployment
-            if check_allowlist(project_id):
-                logging.info(f'The project {project_id} is in the allowlist. No action being taken.')
-            else:
-                logging.info(f'The project {project_id} is not in the allowlist.')
-                # if the function is running in "write" mode, remove public members
-                if mode == "write":
-                    logging.info('Lockdown is in write mode. Removing public IAM members.')
-                    # Removes the public IAM bindings from the bucket for this specific role
-                    remove_public_iam_members_from_policy(bucket_name, member_bindings_to_remove, bucket)
-                # if function is in read mode, take no action and publish message to pub/sub
-                if mode == "read":
-                    logging.info('Lockdown is in read-only mode. Taking no action.')
+            # if the function is running in "write" mode, remove public members
+            if mode == "write":
+                logging.info('Lockdown is in write mode. Removing public IAM members.')
+                # Removes the public IAM bindings from the bucket for this specific role
+                remove_public_iam_members_from_policy(bucket_name, member_bindings_to_remove, bucket)
+            # if function is in read mode, take no action and publish message to pub/sub
+            if mode == "read":
+                logging.info('Lockdown is in read-only mode. Taking no action.')
         else:
             logging.info(f'No public members found on bucket {bucket_name} with role: {role}.')
 
