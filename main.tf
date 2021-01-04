@@ -13,14 +13,15 @@
 
 resource "google_pubsub_topic" "alerting_topic" {
   name    = var.topic_name
-  project = var.project_id
+  project = var.alert_topic_project_id
 }
 
 module "project-services" {
+  for_each      = var.enabled_modules
   source  = "terraform-google-modules/project-factory/google//modules/project_services"
   version = "4.0.0"
 
-  project_id = var.project_id
+  project_id = lookup(each.value, "lockdown_project")
 
   activate_apis = [
     "iam.googleapis.com",
@@ -36,8 +37,8 @@ module "function" {
   source        = "./terraform"
   function_name = each.key
 
-  org_id          = lookup(each.value, "org_id")
-  project         = lookup(each.value, "project")
+  org_id          = var.org_id
+  lockdown_project         = lookup(each.value, "lockdown_project")
   region          = lookup(each.value, "region")
   mode            = lookup(each.value, "mode", var.mode)
   name            = lookup(each.value, "name")
