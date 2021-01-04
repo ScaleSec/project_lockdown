@@ -40,3 +40,8 @@ variable "project_list" {
   type = string
   default = "N/A"
 }
+
+variable "region" {
+  description = "The region to deploy lockdown resources to."
+  default = "us-east1"
+}

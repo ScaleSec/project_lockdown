@@ -39,7 +39,7 @@ module "function" {
 
   org_id          = var.org_id
   lockdown_project         = lookup(each.value, "lockdown_project")
-  region          = lookup(each.value, "region")
+  region          = lookup(each.value, "region", var.region)
   mode            = lookup(each.value, "mode", var.mode)
   name            = lookup(each.value, "name")
   log_sink_filter = lookup(each.value, "log_sink_filter")

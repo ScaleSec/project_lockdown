@@ -9,12 +9,10 @@ variable "lockdown_project" {
 
 variable "region" {
   description = "The region to deploy lockdown resources to."
-  default     = "us-east1"
 }
 
 variable "name" {
   description = "A prefix for resource names."
-  default     = "lckdn"
 }
 
 variable "function_perms" {
@@ -33,7 +31,6 @@ variable "log_sink_filter" {
 
 variable "mode" {
   type        = string
-  default     = "read"
   description = "The mode to run lockdown in, either read or write."
 }
 
