@@ -39,7 +39,7 @@ resource "random_id" "random" {
 resource "google_logging_organization_sink" "sink" {
   name             = "${lower(var.name)}-${var.function_name}_sink_${random_id.random.hex}"
   org_id           = var.org_id
-  destination      = "pubsub.googleapis.com/projects/${var.project}/topics/${google_pubsub_topic.topic.name}"
+  destination      = "pubsub.googleapis.com/projects/${var.lockdown_project}/topics/${google_pubsub_topic.topic.name}"
   filter           = local.log_sink_filter
   include_children = true
 }
@@ -66,7 +66,7 @@ resource "google_organization_iam_member" "custom_role_member" {
 
 ## Cloud Function Service Account
 resource "google_service_account" "cfn_sa" {
-  project      = var.project
+  project      = var.lockdown_project
   account_id   = local.function_sa_name
   display_name = "${var.name} ${var.function_name} CFN SA"
 }
@@ -74,12 +74,12 @@ resource "google_service_account" "cfn_sa" {
 ## Pub/Sub Topic for log exports
 resource "google_pubsub_topic" "topic" {
   name    = "${lower(var.name)}-${var.function_name}_topic"
-  project = var.project
+  project = var.lockdown_project
 }
 
 ## Log sink Cloud IAM binding
 resource "google_pubsub_topic_iam_member" "publisher" {
-  project = var.project
+  project = var.lockdown_project
   topic   = google_pubsub_topic.topic.name
   role    = "roles/pubsub.publisher"
   member  = google_logging_organization_sink.sink.writer_identity
@@ -98,8 +98,8 @@ data "archive_file" "source" {
 
 ## Cloud Function source bucket
 resource "google_storage_bucket" "cfn_bucket" {
-  project = var.project
-  name    = "${lower(var.name)}-${var.function_name}_cfn_bucket_${var.project}"
+  project = var.lockdown_project
+  name    = "${lower(var.name)}-${var.function_name}_cfn_bucket_${var.lockdown_project}"
 }
 
 ## Cloud Function source file upload
@@ -113,14 +113,14 @@ resource "google_storage_bucket_object" "cfn_source_archive" {
 resource "google_cloudfunctions_function" "cfn" {
   name                  = local.function_name
   description           = "Cloud Function to remediate ${var.function_name}."
-  project               = var.project
+  project               = var.lockdown_project
   available_memory_mb   = 128
   source_archive_bucket = google_storage_bucket.cfn_bucket.name
   source_archive_object = google_storage_bucket_object.cfn_source_archive.name
   timeout               = 300
   entry_point           = "pubsub_trigger"
   service_account_email = google_service_account.cfn_sa.email
-  runtime               = "python38"
+  runtime               = "python37"
 
   event_trigger {
     event_type = "google.pubsub.topic.publish"

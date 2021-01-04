@@ -3,7 +3,7 @@ variable "org_id" {
   description = "The Organization ID to monitor."
 }
 
-variable "project" {
+variable "lockdown_project" {
   description = "The GCP project to deploy lockdown resources to."
 }
 
