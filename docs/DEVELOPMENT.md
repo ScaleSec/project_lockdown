@@ -71,7 +71,7 @@ In order to support robust logging inside the Cloud Function, we import the shar
     create_logger()
 ```
 
-Once you have the proper logging configured you can easily create logs in Cloud Logging using `logging.$loglevel("Log message here)`. An example could be `logging.info("Log received from Pub/Sub.")`. Remember to import the logging module first!
+Once you have the proper logging configured you can easily create logs in Cloud Logging using `logging.$loglevel("Log message here)`. An example could be `logging.info("Log received from Pub/Sub.")`. Remember to import the logging package first!
 
 ## Allow or Denylist
 Project Lockdown supports an allowlist or denylist (or neither) in order to provide greater flexibility in it's evaluation logic. In order to use the allow or denylist functionality, import the shared function `from lockdown_checklist import check_list` and call that function like:
