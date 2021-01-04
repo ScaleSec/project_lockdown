@@ -18,6 +18,7 @@ def pubsub_trigger(data, context):
 
     # Integrates cloud logging handler to python logging
     create_logger()
+    logging.info('Received compute image IAM update log from Pub/Sub. Checking for public members.')
 
     # Determine if CFN is running in view-only mode
     try:
@@ -33,8 +34,6 @@ def pubsub_trigger(data, context):
 
     # Create compute client to make API calls
     compute_client = create_service()
-
-    logging.info('Received compute image IAM update log from Pub/Sub. Checking for public members.')
 
     # Converting log to json
     data_buffer = base64.b64decode(data['data'])

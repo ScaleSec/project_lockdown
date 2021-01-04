@@ -17,7 +17,6 @@ def pubsub_trigger(data, context):
 
     # Integrates cloud logging handler to python logging
     create_logger()
-
     logging.info('Received GCE instance creation log from Pub/Sub. Checking for default service account.')
 
     # Determine if CFN is running in view-only mode

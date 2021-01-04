@@ -16,6 +16,7 @@ def pubsub_trigger(data, context):
 
     # Integrates cloud logging handler to python logging
     create_logger()
+    logging.info('Received BigQuery table permissions update log from Pub/Sub. Checking for public access.')
 
     # Determine if CFN is running in view-only mode
     try:
@@ -31,8 +32,6 @@ def pubsub_trigger(data, context):
 
     #Create BigQuery Client
     client = bigquery.Client()
-
-    logging.info('Received BigQuery permissions update log from Pub/Sub. Checking for public access.')
 
     # Converting log to json
     data_buffer = base64.b64decode(data['data'])

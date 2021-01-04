@@ -19,6 +19,7 @@ def pubsub_trigger(data, context):
 
     # Integrates cloud logging handler to python logging
     create_logger()
+    logging.info('Received GKE cluster log from Pub/Sub. Checking for legacy ABAC.')
 
     # Determine if CFN is running in view-only mode
     try:
@@ -34,8 +35,6 @@ def pubsub_trigger(data, context):
 
     # Create our GKE client
     container_client = container.ClusterManagerClient()
-
-    logging.info('Received GKE cluster log from Pub/Sub. Checking for legacy ABAC.')
 
     # Converting log to json
     data_buffer = base64.b64decode(data['data'])

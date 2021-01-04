@@ -17,6 +17,7 @@ def pubsub_trigger(data, context):
 
     # Integrates cloud logging handler to python logging
     create_logger()
+    logging.info('Received SSL policy log from Pub/Sub. Checking for weak TLS.')
 
     # Determine if CFN is running in view-only mode
     try:
@@ -32,8 +33,6 @@ def pubsub_trigger(data, context):
 
     # Create compute client to make API calls
     compute_client = create_service()
-
-    logging.info('Received SSL policy log from Pub/Sub. Checking for weak TLS.')
 
     # Converting log to json
     data_buffer = base64.b64decode(data['data'])

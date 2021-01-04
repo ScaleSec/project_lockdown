@@ -16,14 +16,13 @@ def pubsub_trigger(data, context):
 
     # Integrates cloud logging handler to python logging
     create_logger()
+    logging.info('Received GCS permissions update log from Pub/Sub. Checking for public access.')
 
     # Determine if CFN is running in view-only mode
     try:
         mode = getenv('MODE')
     except:
         logging.error('Mode not found in environment variable.')
-
-    logging.info('Received GCS permissions update log from Pub/Sub. Checking for public access.')
 
     # Converting log to json
     data_buffer = base64.b64decode(data['data'])
