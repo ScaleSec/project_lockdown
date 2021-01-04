@@ -46,6 +46,7 @@ def pubsub_trigger(data, context):
     cluster_name = log_entry['resource']['labels']['cluster_name']
     api_action = log_entry['protoPayload']['methodName']
 
+    # Check our project_id against the project list set at deployment
     if check_list(project_id):
         logging.info(f'The project {project_id} is not in the allowlist, is in the denylist, or a list is not fully configured. Continuing evaluation.')
 

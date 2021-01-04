@@ -51,6 +51,7 @@ def pubsub_trigger(data, context):
     project_id = ssl_project_id[0]
     ssl_policy = ssl_project_id[1]
 
+    # Check our project_id against the project list set at deployment
     if check_list(project_id):
         logging.info(f'The project {project_id} is not in the allowlist, is in the denylist, or a list is not fully configured. Continuing evaluation.')
 

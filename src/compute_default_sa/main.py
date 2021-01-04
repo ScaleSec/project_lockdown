@@ -53,11 +53,14 @@ def pubsub_trigger(data, context):
     zone = project_zone_instance[1]
     instance_name = project_zone_instance[2]
 
+    # Check our project_id against the project list set at deployment
     if check_list(project_id):
         logging.info(f'The project {project_id} is not in the allowlist, is in the denylist, or a list is not fully configured. Continuing evaluation.')
 
+        # Retrieves the GCE metadata.
         gce_info = get_gce_info(compute_client, instance_name, zone, project_id)
 
+        # Determine the service account assigned to the GCE instance.
         gce_sa = eval_gce_info(gce_info, instance_name, project_id)
 
         if gce_sa:

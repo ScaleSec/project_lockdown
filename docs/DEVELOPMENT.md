@@ -1,3 +1,5 @@
+## TODO: Add info about allowlist
+
 # Development Guide
 
 Thank you for your interest in contributing to Project Lockdown. This guide will provide you with general guidance on how to create automated remediation Cloud Functions. Before beginning development, make sure you have read through our [contributing guidelines](CONTRIBUTING.md).
@@ -8,34 +10,36 @@ Potential remediation events in Project Lockdown follow a standardized data flow
 
 Once a potential remediation event is matched to the log sink's filter, it is sent to a Pub/Sub topic. Each remediation function has it's own Pub/Sub topic that it subscribes to for messages. Once a message (Cloud Logging event) lands in a Pub/Sub topic, Pub/Sub will automatically trigger the remediation Cloud Function subscribed to the topic to analyze the GCP resource in question. More information about Pub/Sub subscriptions can be found [here](https://cloud.google.com/pubsub/docs/subscriber).
 
-The remediation Cloud Function will analyze the GCP resource related to the Cloud Logging event and determine if the resource is in violation of best practices. If Project Lockdown is deployed in `write` mode, the Cloud Function will remediate the resource and log a message to an alerting Pub/Sub topic. This Pub/Sub topic is separate from the topic that the Cloud Function receives it's messages from, is shared by all Cloud Functions in Project Lockdown, and is available for you to tie in a SIEM or alerting functionality. If the Cloud Function is in `read` mode (default), the function will not update the resource and will only log a message to the alerting Pub/Sub topic.
+The remediation Cloud Function will analyze the GCP resource related to the Cloud Logging event and determine if the resource is in violation of best practices. Before any analysis takes place, Project Lockdown will check if a denylist or allowlist is set. Based on the configuration of the allowlist or denylist (or if non exists) Project Lockdown will exit gracefully or continue with its evaluation logic. If Project Lockdown is deployed in `write` mode, the Cloud Function will remediate the resource and log a message to an alerting Pub/Sub topic. This Pub/Sub topic is separate from the topic that the Cloud Function receives it's messages from, is shared by all Cloud Functions in Project Lockdown, and is available for you to tie in a SIEM or alerting functionality. If the Cloud Function is in `read` mode (default), the function will not update the resource and will only log a message to the alerting Pub/Sub topic.
 
 ## Terraform Requirements
 
 Project Lockdown is written using the new `for_each` (v.13 of Terraform) module functionality to reduce the amount of Terraform updates required when a new remediation is configured. If you are interested in adding a new Cloud Function to remediate a specific scenario you will need to perform the following.
 
-1. Add a new JSON block to the [terraform.tfvars](../terraform.tfvars) file and match the structure of the previous entries. For example:
+1. Add a new JSON block to the [terraform.tfvars](../terraform.tfvars) file and match the structure of the previous entries. In addition to the `enabled_modules` JSON blocks, you can set variables for all remediation functions outside of the nested JSON. For example:
 
 ```
+alert_topic_project_id = "security-alerting-project"
+org_id                 = "1234567890"
+mode                   = "read"
+region                 = "us-east1"
+project_list           = "project123,projectabc,special-project"
+list_type              = "deny"
+
 enabled_modules = {
-#   public_bigquery_dataset = {
-#     org_id = "123456",
-#     project = "test_project",
-#     region = "us-east1",
-#     mode   = "read",
-#     name = "bqdataset",
-#     log_sink_filter = "resource.type=\"bigquery_dataset\"  protoPayload.methodName=\"google.iam.v1.IAMPolicy.SetIamPolicy\" AND NOT protoPayload.authenticationInfo.principalEmail"
-#     function_perms = ["logging.logEntries.create", "bigquery.datasets.update", "bigquery.datasets.get", "pubsub.topics.publish"],
-#   }
-#   $new_remediation_here = {
-#     org_id = "123456",
-#     project = "test_project",
-#     region = "us-east1",
-#     mode   = "read",
-#     name = "$your_name_prefix_here",
-#     log_sink_filter = "$your_filter_here"
-#     function_perms = $your_permissions_here,
-#   }
+   public_bigquery_dataset = {
+     lockdown_project = "test_project",
+     name = "bqdataset",
+     log_sink_filter = "resource.type=\"bigquery_dataset\"  protoPayload.methodName=\"google.iam.v1.IAMPolicy.SetIamPolicy\" AND NOT protoPayload.authenticationInfo.principalEmail"
+     function_perms = ["logging.logEntries.create", "bigquery.datasets.update", "bigquery.datasets.get", "pubsub.topics.publish"],
+   }
+   legacy_gke_abac = {
+     lockdown_project = "test_project",
+     name = "gkeabac",
+     log_sink_filter = "(protoPayload.methodName=\"google.container.v1beta1.ClusterManager.CreateCluster\" AND operation.first=\"true\") OR (protoPayload.methodName=\"google.container.v1.ClusterManager.SetLegacyAbac\" AND protoPayload.request.enabled=\"true\") AND NOT protoPayload.authenticationInfo.principalEmail"
+     function_perms = ["logging.logEntries.create", "pubsub.topics.publish", "container.clusters.get", "container.clusters.update"],
+   }
+}
 ```
 __Do not add sensitive information to the `.tfvars` file.__
 
@@ -45,9 +49,9 @@ __Do not add sensitive information to the `.tfvars` file.__
 
 ## Cloud Function Requirements
 
-All of the Cloud Functions are written in python 3.8 and leverage shared functions located in the [src](../src/common/) directory. In order to start to create the evaluation logic for a remediation, you first need to create a directory in the [src](../src/) folder that matches the name you selected in step 2 in the Terraform Requirements above.
+All of the Cloud Functions are written in python 3.8 and leverage shared functions located in the [src](../src/common/) directory. In order to start to create the evaluation logic for a remediation, you first need to create a directory in the [src](../src/) folder that matches the name of the key supplied in the tfvars file. Using the example above, you would create a directory in [src](../src/) called `public_bigquery_dataset` or `legacy_gke_abac`. 
 
-Inside your `src/` folder, you need a `requirements.txt`, `main.py`, and an empty `__init__.py`. The `requirements.txt` contains all of your external packages needed.
+Inside your newly created `src/` sub-directory, you need a `requirements.txt`, `main.py`, and an empty `__init__.py`. The `requirements.txt` contains all of your external packages needed.
 
 ## Python Requirements
 
@@ -69,7 +73,16 @@ In order to support robust logging inside the Cloud Function, we import the shar
     create_logger()
 ```
 
-Once you have the proper logging configured you can easily create logs in Cloud Logging using `logging.$loglevel("Log message here)`. An example could be `logging.info("Log received from Pub/Sub.")`. 
+Once you have the proper logging configured you can easily create logs in Cloud Logging using `logging.$loglevel("Log message here)`. An example could be `logging.info("Log received from Pub/Sub.")`. Remember to import the logging module first!
+
+## Allow or Denylist
+Project Lockdown supports an allowlist or denylist (or neither) in order to provide greater flexibility in it's evaluation logic. In order to use the allow or denylist functionality, import the shared function `from lockdown_checklist import check_list` and call that function like:
+
+```
+# Check our project_id against the project list set at deployment
+    if check_list(project_id):
+        $code_logic_here
+```
 
 ### Pub/Sub messages
 Similiar to the function logging outlined above, we use a shared function that is imported via `from lockdown_pubsub import publish_message`. This function requires six arguments:
@@ -81,16 +94,17 @@ publish_message(finding_type, mode, resource_id, project_id, message_info, topic
 1. Two of the arguments, `mode` and `topic_id` you can retrieve from the Cloud Functions environment variables:
 
 ```
+# Determine if CFN is running in read-only mode
 try:
-        mode = getenv('MODE')
-    except:
-        logging.error('Mode not found in environment variable.')
+    mode = getenv('MODE')
+except:
+    logging.error('Mode not found in environment variable.')
     
-    # Determine alerting Pub/Sub topic
-    try:
-        topic_id = getenv('TOPIC_ID')
-    except:
-        logging.error('Topic ID not found in environment variable.')
+# Determine alerting Pub/Sub topic
+try:
+    topic_id = getenv('TOPIC_ID')
+except:
+    logging.error('Topic ID not found in environment variable.')
 ```
 2. `finding_type` generally aligns with the `src/` sub-directory name you created but is intended to identity _what_ was found. `public_bugquery_dataset` is an example of a `finding_type`.
 3. `resource_id` represents the GCP resource that is being analyzed. 
