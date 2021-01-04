@@ -1,5 +1,3 @@
-## TODO: Add info about allowlist
-
 # Development Guide
 
 Thank you for your interest in contributing to Project Lockdown. This guide will provide you with general guidance on how to create automated remediation Cloud Functions. Before beginning development, make sure you have read through our [contributing guidelines](CONTRIBUTING.md).
