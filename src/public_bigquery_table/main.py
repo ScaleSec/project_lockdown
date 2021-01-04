@@ -7,12 +7,15 @@ from google.cloud import bigquery
 
 from lockdown_logging import create_logger # pylint: disable=import-error
 from lockdown_pubsub import publish_message # pylint: disable=import-error
-from lockdown_allowlist import check_allowlist # pylint: disable=import-error
+from lockdown_checklist import check_list # pylint: disable=import-error
 
 def pubsub_trigger(data, context):
     """
     Used with Pub/Sub trigger method to evaluate the BigQuery Table for public members.
     """
+
+    # Integrates cloud logging handler to python logging
+    create_logger()
 
     # Determine if CFN is running in view-only mode
     try:
@@ -29,9 +32,6 @@ def pubsub_trigger(data, context):
     #Create BigQuery Client
     client = bigquery.Client()
 
-    # Integrates cloud logging handler to python logging
-    create_logger()
-
     logging.info('Received BigQuery permissions update log from Pub/Sub. Checking for public access.')
 
     # Converting log to json
@@ -43,47 +43,52 @@ def pubsub_trigger(data, context):
     table_id = log_entry['protoPayload']['serviceData']['setIamPolicyRequest']['resource']
     project_id = log_entry['resource']['labels']['project_id']
 
-    # Create the fully-qualified table ID in standard SQL format
-    # Split the table_id into a list of strings
-    table_list = table_id.split('/')
-    # Set our list of strings to remove
-    remove_strings = ["projects", "datasets", "tables"]
-    # Remove all strings in list to create a list of table_id values
-    table_id = [i for i in table_list if i not in remove_strings]
-    # Create the fully-qualified table ID in standard SQL format using the leftover values
-    table_id = '.'.join(table_id)
+    if check_list(project_id):
+        logging.info(f'The project {project_id} is not in the allowlist, is in the denylist, or a list is not fully configured. Continuing evaluation.')
 
-    # Get the table ref
-    table_ref = client.get_table(table_id)
+        # Create the fully-qualified table ID in standard SQL format
+        # Split the table_id into a list of strings
+        table_list = table_id.split('/')
+        # Set our list of strings to remove
+        remove_strings = ["projects", "datasets", "tables"]
+        # Remove all strings in list to create a list of table_id values
+        table_id = [i for i in table_list if i not in remove_strings]
+        # Create the fully-qualified table ID in standard SQL format using the leftover values
+        table_id = '.'.join(table_id)
 
-    # Get the current BigQuery Table Policy
-    table_policy = get_table_policy(client, table_ref)
+        # Get the table ref
+        table_ref = client.get_table(table_id)
 
-    # Generate a new policy without public members
-    new_policy = validate_table_policy(table_policy, table_id)
+        # Get the current BigQuery Table Policy
+        table_policy = get_table_policy(client, table_ref)
 
-    if new_policy:
-        logging.info(f'Found public members on BQ table: {table_id}.')
+        # Generate a new policy without public members
+        new_policy = validate_table_policy(table_policy, table_id)
 
-        finding_type = "public_bigquery_table"
-        # Set our pub/sub message
-        message = f"Found public members on BigQuery table: {table_id} in project: {project_id}."
-        # Publish message to Pub/Sub
-        logging.info(f'Publishing message to Pub/Sub.')
-        try:
-            publish_message(finding_type, mode, table_id, project_id, message, topic_id)
-            logging.info(f'Published message to {topic_id}')
-        except:
-            logging.error(f'Could not publish message to {topic_id}')
-            raise
-        if mode == "write":
-            logging.info(f'Lockdown is in write mode. Updating BigQuery table: {table_id} with new table policy.')
-            # Updates BQ table with private table policy
-            update_table_policy(new_policy, client, table_ref, table_id)
-        if mode == "read":
-            logging.info('Lockdown is in read-only mode. Taking no action.')
+        if new_policy:
+            logging.info(f'Found public members on BQ table: {table_id}.')
+
+            finding_type = "public_bigquery_table"
+            # Set our pub/sub message
+            message = f"Found public members on BigQuery table: {table_id} in project: {project_id}."
+            # Publish message to Pub/Sub
+            logging.info(f'Publishing message to Pub/Sub.')
+            try:
+                publish_message(finding_type, mode, table_id, project_id, message, topic_id)
+                logging.info(f'Published message to {topic_id}')
+            except:
+                logging.error(f'Could not publish message to {topic_id}')
+                raise
+            if mode == "write":
+                logging.info(f'Lockdown is in write mode. Updating BigQuery table: {table_id} with new table policy.')
+                # Updates BQ table with private table policy
+                update_table_policy(new_policy, client, table_ref, table_id)
+            if mode == "read":
+                logging.info('Lockdown is in read-only mode. Taking no action.')
+        else:
+            logging.info(f"The BigQuery Table: {table_id} is not public facing.")
     else:
-        logging.info(f"The BigQuery Table: {table_id} is not public facing.")
+        logging.info(f'The project {project_id} is in the allowlist or is not in the denylist. No action being taken.')
 
 
 def get_table_policy(client, table_ref):
@@ -141,7 +146,7 @@ def validate_table_policy(table_policy, table_id):
     if "public" in locals():
         return table_policy
     else:
-        logging.info:(f"No public members found on BigQuery table: {table_id}.")
+        logging.info(f'No public members found on BigQuery table: {table_id}.')
 
 def update_table_policy(new_policy, client, table_ref, table_id):
     """

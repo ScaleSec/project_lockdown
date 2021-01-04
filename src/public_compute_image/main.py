@@ -8,13 +8,16 @@ import googleapiclient.discovery
 
 from lockdown_logging import create_logger # pylint: disable=import-error
 from lockdown_pubsub import publish_message # pylint: disable=import-error
-from lockdown_allowlist import check_allowlist # pylint: disable=import-error
+from lockdown_checklist import check_list # pylint: disable=import-error
 
 
 def pubsub_trigger(data, context):
     """
     Used with Pub/Sub trigger method to evaluate the compute image IAM policy for public members.
     """
+
+    # Integrates cloud logging handler to python logging
+    create_logger()
 
     # Determine if CFN is running in view-only mode
     try:
@@ -30,9 +33,6 @@ def pubsub_trigger(data, context):
 
     # Create compute client to make API calls
     compute_client = create_service()
-
-    # Integrates cloud logging handler to python logging
-    create_logger()
 
     logging.info('Received compute image IAM update log from Pub/Sub. Checking for public members.')
 
@@ -54,32 +54,37 @@ def pubsub_trigger(data, context):
     project_id = project_image_id[0]
     image_id = project_image_id[1]
 
-    # Get the compute image IAM policy
-    policy = get_iam_policy(compute_client, image_id, project_id)
+    if check_list(project_id):
+        logging.info(f'The project {project_id} is not in the allowlist, is in the denylist, or a list is not fully configured. Continuing evaluation.')
 
-    # Generate a new policy without public members
-    new_policy = eval_iam_policy(policy, image_id, project_id)
+        # Get the compute image IAM policy
+        policy = get_iam_policy(compute_client, image_id, project_id)
 
-    if new_policy:
-        finding_type = "public_gce_image"
-        # Set our pub/sub message
-        message = f"Found public members on GCE image: {image_id} in project: {project_id}."
-        # Publish message to Pub/Sub
-        logging.info(f'Publishing message to Pub/Sub.')
-        try:
-            publish_message(finding_type, mode, image_id, project_id, message, topic_id)
-            logging.info(f'Published message to {topic_id}')
-        except:
-            logging.error(f'Could not publish message to {topic_id}')
-            raise
-        if mode == "write":
-            logging.info(f"Lockdown is in write mode. Updating compute image: {image_id} with new IAM policy.")
-            # Updates compute image with private IAM policy
-            set_iam_policy(new_policy, compute_client, image_id, project_id)
-        if mode == "read":
-            logging.info('Lockdown is in read-only mode. Taking no action.')
+        # Generate a new policy without public members
+        new_policy = eval_iam_policy(policy, image_id, project_id)
+
+        if new_policy:
+            finding_type = "public_gce_image"
+            # Set our pub/sub message
+            message = f"Found public members on GCE image: {image_id} in project: {project_id}."
+            # Publish message to Pub/Sub
+            logging.info(f'Publishing message to Pub/Sub.')
+            try:
+                publish_message(finding_type, mode, image_id, project_id, message, topic_id)
+                logging.info(f'Published message to {topic_id}')
+            except:
+                logging.error(f'Could not publish message to {topic_id}')
+                raise
+            if mode == "write":
+                logging.info(f"Lockdown is in write mode. Updating compute image: {image_id} with new IAM policy.")
+                # Updates compute image with private IAM policy
+                set_iam_policy(new_policy, compute_client, image_id, project_id)
+            if mode == "read":
+                logging.info('Lockdown is in read-only mode. Taking no action.')
+        else:
+            logging.info(f"The compute image: {image_id} is not public facing.")
     else:
-        logging.info(f"The compute image: {image_id} is not public facing.")
+        logging.info(f'The project {project_id} is in the allowlist or is not in the denylist. No action being taken.')
 
 def get_iam_policy(compute_client, image_id, project_id):
     """

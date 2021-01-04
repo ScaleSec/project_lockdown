@@ -14,14 +14,14 @@ def pubsub_trigger(data, context):
     Used with Pub/Sub trigger method to evaluate bucket for public access and remediate if public access exists.
     """
 
+    # Integrates cloud logging handler to python logging
+    create_logger()
+
     # Determine if CFN is running in view-only mode
     try:
         mode = getenv('MODE')
     except:
         logging.error('Mode not found in environment variable.')
-
-    # Integrates cloud logging handler to python logging
-    create_logger()
 
     logging.info('Received GCS permissions update log from Pub/Sub. Checking for public access.')
 

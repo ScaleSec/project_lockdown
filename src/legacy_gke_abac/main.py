@@ -9,13 +9,16 @@ from google.api_core import retry
 
 from lockdown_logging import create_logger # pylint: disable=import-error
 from lockdown_pubsub import publish_message # pylint: disable=import-error
-from lockdown_allowlist import check_allowlist # pylint: disable=import-error
+from lockdown_checklist import check_list # pylint: disable=import-error
 
 
 def pubsub_trigger(data, context):
     """
     Used with Pub/Sub trigger method to evaluate the GKE cluster for legacy ABAC.
     """
+
+    # Integrates cloud logging handler to python logging
+    create_logger()
 
     # Determine if CFN is running in view-only mode
     try:
@@ -32,8 +35,6 @@ def pubsub_trigger(data, context):
     # Create our GKE client
     container_client = container.ClusterManagerClient()
 
-    # Integrates cloud logging handler to python logging
-    create_logger()
     logging.info('Received GKE cluster log from Pub/Sub. Checking for legacy ABAC.')
 
     # Converting log to json
@@ -46,40 +47,45 @@ def pubsub_trigger(data, context):
     cluster_name = log_entry['resource']['labels']['cluster_name']
     api_action = log_entry['protoPayload']['methodName']
 
-    # There are two different log events this function can be triggered with.
-    # One of the creation of a cluster in which we need to get the clusters data.
-    if api_action == "google.container.v1beta1.ClusterManager.CreateCluster":
-        # Get cluster details to begin evaluation logic
-        cluster_details = get_cluster_details(container_client, cluster_id)
-        # Check to see if legacy ABAC is enabled
-        abac_value = check_legacy_abac(cluster_details, cluster_id)
-    # The other log event is when a cluster's legacy auth setting is updated
-    # we can get enabled or disabled from the log event and do not need to get the cluster details
-    # This cloud function shouldn't be invocated if the API event was to disable legacy ABAC
-    # The logic below will always be set to enabled == true unless the log sink query is changed
-    # By adding this check we can skip getting the clusters data and go right to disable_legacy_abac()
-    if api_action == "google.container.v1.ClusterManager.SetLegacyAbac":
-        logging.info(f"GKE cluster: {cluster_name} was updated to enable legacy ABAC.")
-        abac_value = "enabled"
+    if check_list(project_id):
+        logging.info(f'The project {project_id} is not in the allowlist, is in the denylist, or a list is not fully configured. Continuing evaluation.')
 
-    if abac_value:
-        finding_type = "gke_legacy_abac"
-        # Set our pub/sub message
-        message = f"GKE cluster: {cluster_id} has legacy ABAC enabled."
-        # Publish message to Pub/Sub
-        logging.info('Publishing message to Pub/Sub.')
-        try:
-            publish_message(finding_type, mode, cluster_name, project_id, message, topic_id)
-            logging.info(f'Published message to {topic_id}')
-        except:
-            logging.error(f'Could not publish message to {topic_id}')
-            raise
-        if mode == "write":
-            logging.info("Lockdown is in write mode.")
-            # update GKE cluster
-            disable_legacy_abac(container_client, cluster_id)
-        if mode == "read":
-            logging.info('Lockdown is in read-only mode. Taking no action.')
+        # There are two different log events this function can be triggered with.
+        # One is the creation of a cluster in which we need to get the clusters data.
+        if api_action == "google.container.v1beta1.ClusterManager.CreateCluster":
+            # Get cluster details to begin evaluation logic
+            cluster_details = get_cluster_details(container_client, cluster_id)
+            # Check to see if legacy ABAC is enabled
+            abac_value = check_legacy_abac(cluster_details, cluster_id)
+        # The other log event is when a cluster's legacy auth setting is updated
+        # we can get enabled or disabled from the log event and do not need to get the cluster details
+        # This cloud function shouldn't be invocated if the API event was to disable legacy ABAC
+        # The logic below will always be set to enabled == true unless the log sink query is changed
+        # By adding this check we can skip getting the clusters data and go right to disable_legacy_abac()
+        if api_action == "google.container.v1.ClusterManager.SetLegacyAbac":
+            logging.info(f"GKE cluster: {cluster_name} was updated to enable legacy ABAC.")
+            abac_value = "enabled"
+
+        if abac_value:
+            finding_type = "gke_legacy_abac"
+            # Set our pub/sub message
+            message = f"GKE cluster: {cluster_id} has legacy ABAC enabled."
+            # Publish message to Pub/Sub
+            logging.info('Publishing message to Pub/Sub.')
+            try:
+                publish_message(finding_type, mode, cluster_name, project_id, message, topic_id)
+                logging.info(f'Published message to {topic_id}')
+            except:
+                logging.error(f'Could not publish message to {topic_id}')
+                raise
+            if mode == "write":
+                logging.info("Lockdown is in write mode.")
+                # update GKE cluster
+                disable_legacy_abac(container_client, cluster_id)
+            if mode == "read":
+                logging.info('Lockdown is in read-only mode. Taking no action.')
+    else:
+        logging.info(f'The project {project_id} is in the allowlist or is not in the denylist. No action being taken.')
 
 
 def get_cluster_details(container_client, cluster_id):

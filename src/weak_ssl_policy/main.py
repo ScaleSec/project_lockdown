@@ -15,6 +15,8 @@ def pubsub_trigger(data, context):
     Used with Pub/Sub trigger method to evaluate the SSL policy for a weak TLS.
     """
 
+    # Integrates cloud logging handler to python logging
+    create_logger()
 
     # Determine if CFN is running in view-only mode
     try:
@@ -30,9 +32,6 @@ def pubsub_trigger(data, context):
 
     # Create compute client to make API calls
     compute_client = create_service()
-
-    # Integrates cloud logging handler to python logging
-    create_logger()
 
     logging.info('Received SSL policy log from Pub/Sub. Checking for weak TLS.')
 
