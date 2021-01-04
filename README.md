@@ -29,6 +29,12 @@ Trust is a key component of any security tool so Project Lockdown is built with 
 ## Alerting
 Project Lockdown will submit a message to a Pub/Sub topic for each finding it encounters. Slack, SendGrid, JIRA, or even a SIEM can be subscribed to the Pub/Sub topic to receive alerts. Regardless if Project Lockdown is in read or write mode, a message will be published in addition to Cloud Logging events for each action taken.
 
+## Allowlist or Denylist functionality
+Project Lockdown supports an allowlist or denylist on a per remediation basis or one to cover all remediations. To configure an allowlist or denylist follow the below steps:
+
+- Set the `list_type` variable to either `allow` or `deny` depending on the type of list you'd like. You can set this inside each `enabled_modules` key or outside (to apply to all remediations)
+- Supply a list of comma separated (no spaces) project IDs enclosed by double quotes to the variable `project_list`. For example: "project123,projectabc,project-1"
+
 ## Remediation Scenarios
 For details around what scenarios Project Lockdown remediates, see the [README.md](./src/README.md).
 
@@ -73,8 +79,12 @@ __Note: Functions not specified in `enabled_modules` will not be created and wil
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| alert\_topic\_project\_id | The project to deploy the alert Pub/Sub topic to. | `string` | n/a | yes |
 | enabled\_modules | A mapping of enabled modules and their variables | `any` | n/a | yes |
-| project\_id | The project to deploy the alert Pub/Sub topic to. | `string` | n/a | yes |
+| list\_type | The type of list being passed in to the Cloud Function. The choices are allow, deny, or N/A (for none). | `string` | `"N/A"` | no |
+| mode | The mode to run lockdown in, either read or write. | `string` | `"read"` | no |
+| org\_id | The Organization ID to monitor. | `any` | n/a | yes |
+| project\_list | A list of project IDs to use as a denylist or allowlist. | `string` | `"N/A"` | no |
 | region | The region to deploy lockdown resources to. | `string` | `"us-east1"` | no |
 | topic\_name | The Pub/Sub topic to send messages to when a finding is generated. | `string` | `"project_lockdown_alert_topic"` | no |
 
