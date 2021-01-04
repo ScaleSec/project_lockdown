@@ -8,7 +8,7 @@ import googleapiclient.discovery
 
 from lockdown_logging import create_logger # pylint: disable=import-error
 from lockdown_pubsub import publish_message # pylint: disable=import-error
-from lockdown_allowlist import check_allowlist # pylint: disable=import-error
+from lockdown_checklist import check_list # pylint: disable=import-error
 
 def pubsub_trigger(data, context):
     """
@@ -53,32 +53,37 @@ def pubsub_trigger(data, context):
     project_id = ssl_project_id[0]
     ssl_policy = ssl_project_id[1]
 
-    # Capture the SSL Policy's metadata
-    ssl_description = get_ssl_policy(project_id, ssl_policy, compute_client)
+    if check_list(project_id):
+        logging.info(f'The project {project_id} is not in the allowlist, is in the denylist, or a list is not fully configured. Continuing evaluation.')
 
-    # Only return the tls_version variable if it is TLS 1.0 (weak)
-    tls_version = analyze_ssl_policy(ssl_description, project_id, compute_client, ssl_policy)
+        # Capture the SSL Policy's metadata
+        ssl_description = get_ssl_policy(project_id, ssl_policy, compute_client)
 
-    # if the variable tls_version exists, update to TLS 1.1
-    if tls_version:
-        finding_type = "weak_ssl_policy"
-        # Set our pub/sub message
-        message = f"Found weak TLS 1.0 on SSL policy: {ssl_policy} in project: {project_id}."
-        # Publish message to Pub/Sub
-        logging.info(f'Publishing message to Pub/Sub.')
-        try:
-            publish_message(finding_type, mode, ssl_policy, project_id, message, topic_id)
-            logging.info(f'Published message to {topic_id}')
-        except:
-            logging.error(f'Could not publish message to {topic_id}')
-            raise
-        if mode == "write":
-            logging.info(f'Lockdown is in write mode. Updating SSL policy: {ssl_policy} with TLS 1.1."')
-            update_ssl_policy(compute_client, ssl_description, project_id, ssl_policy)
-        if mode == "read":
-            logging.info('Lockdown is in read-only mode. Taking no action.')
+        # Only return the tls_version variable if it is TLS 1.0 (weak)
+        tls_version = analyze_ssl_policy(ssl_description, project_id, compute_client, ssl_policy)
+
+        # if the variable tls_version exists, update to TLS 1.1
+        if tls_version:
+            finding_type = "weak_ssl_policy"
+            # Set our pub/sub message
+            message = f"Found weak TLS 1.0 on SSL policy: {ssl_policy} in project: {project_id}."
+            # Publish message to Pub/Sub
+            logging.info(f'Publishing message to Pub/Sub.')
+            try:
+                publish_message(finding_type, mode, ssl_policy, project_id, message, topic_id)
+                logging.info(f'Published message to {topic_id}')
+            except:
+                logging.error(f'Could not publish message to {topic_id}')
+                raise
+            if mode == "write":
+                logging.info(f'Lockdown is in write mode. Updating SSL policy: {ssl_policy} with TLS 1.1."')
+                update_ssl_policy(compute_client, ssl_description, project_id, ssl_policy)
+            if mode == "read":
+                logging.info('Lockdown is in read-only mode. Taking no action.')
+        else:
+            logging.info(f"The SSL policy {ssl_policy} is not using weak TLS.")
     else:
-        logging.info(f"The SSL policy {ssl_policy} is not using weak TLS.")
+        logging.info(f'The project {project_id} is in the allowlist or is not in the denylist. No action being taken.')
 
 def get_ssl_policy(project_id, ssl_policy, compute_client):
     """
