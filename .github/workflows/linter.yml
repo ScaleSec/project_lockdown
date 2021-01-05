@@ -51,4 +51,5 @@ jobs:
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_TERRAFORM: true
           VALIDATE_PYTHON_PYLINT: true
+          VALIDATE_TERRAFORM_TERRASCAN: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
