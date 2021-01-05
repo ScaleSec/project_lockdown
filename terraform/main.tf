@@ -100,6 +100,8 @@ data "archive_file" "source" {
 resource "google_storage_bucket" "cfn_bucket" {
   project = var.project
   name    = "${lower(var.name)}-${var.function_name}_cfn_bucket_${var.project}"
+  
+  uniform_bucket_level_access = true
 }
 
 ## Cloud Function source file upload
