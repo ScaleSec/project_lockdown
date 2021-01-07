@@ -41,3 +41,8 @@ variable "topic_id" {
   type        = string
   description = "The Pub/Sub topic ID to send alerts to."
 }
+
+variable "function_memory" {
+  type        = number
+  description = "Memory available to a function"
+}

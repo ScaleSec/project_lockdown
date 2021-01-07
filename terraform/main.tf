@@ -114,7 +114,7 @@ resource "google_cloudfunctions_function" "cfn" {
   name                  = local.function_name
   description           = "Cloud Function to remediate ${var.function_name}."
   project               = var.project
-  available_memory_mb   = 128
+  available_memory_mb   = var.function_memory
   source_archive_bucket = google_storage_bucket.cfn_bucket.name
   source_archive_object = google_storage_bucket_object.cfn_source_archive.name
   timeout               = 60

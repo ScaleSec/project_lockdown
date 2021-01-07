@@ -20,7 +20,7 @@ module "project-services" {
   source  = "terraform-google-modules/project-factory/google//modules/project_services"
   version = "4.0.0"
 
-  project_id                  = var.project_id
+  project_id = var.project_id
 
   activate_apis = [
     "iam.googleapis.com",
@@ -41,6 +41,7 @@ module "function" {
   region          = lookup(each.value, "region")
   mode            = lookup(each.value, "mode")
   name            = lookup(each.value, "name")
+  function_memory = lookup(each.value, "function_memory", 128)
   log_sink_filter = lookup(each.value, "log_sink_filter")
   function_perms  = lookup(each.value, "function_perms")
   topic_id        = google_pubsub_topic.alerting_topic.name
