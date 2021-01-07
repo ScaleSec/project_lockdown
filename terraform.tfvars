@@ -60,4 +60,14 @@
 #     log_sink_filter = "protoPayload.serviceName=\"compute.googleapis.com\" AND ((protoPayload.methodName=\"beta.compute.instances.insert\" AND protoPayload.request.serviceAccounts.email=~\"^\\d{1,12}-compute@developer.gserviceaccount.com$\") OR protoPayload.methodName=\"v1.compute.instances.start\") AND NOT protoPayload.authenticationInfo.principalEmail"
 #     function_perms = ["logging.logEntries.create", "pubsub.topics.publish", "compute.instances.get", "compute.instances.stop"],
 #   }
+#   public_firewall_port = {
+#     org_id = "123456",
+#     project = "test_project",
+#     region = "us-east1",
+#     mode   = "read",
+#     name   = "fwrule",
+#     function_memory = 256,
+#     log_sink_filter = "resource.type=\"gce_firewall_rule\" AND (protoPayload.methodName=\"v1.compute.firewalls.insert\" OR protoPayload.methodName=\"v1.compute.firewalls.update\" OR protoPayload.methodName=\"v1.compute.firewalls.patch\") AND NOT protoPayload.request.disabled=true AND operation.last=true AND NOT protoPayload.authenticationInfo.principalEmail",
+#     function_perms  = ["logging.logEntries.create", "pubsub.topics.publish", "compute.firewalls.get", "compute.firewalls.update", "compute.networks.updatePolicy"],
+#   }
 # }
