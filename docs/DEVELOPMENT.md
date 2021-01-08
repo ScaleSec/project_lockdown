@@ -42,6 +42,7 @@ __Do not add sensitive information to the `.tfvars` file.__
 2. The `name` variable represents a prefix that is added to GCP resources. We suggest keeping it short and avoiding dashes, underscores, or special characters. 
 3. The `log_sink_filter` is the aggregated log sink filter. This should be as specific as possible to reduce the number of invocations of the Cloud Function. 
 4. The `function_perms` is the Cloud Functions custom role permissions. Try to keep this as close to least privilege as possible and you must include `"logging.logEntries.create"` and `"pubsub.topics.publish"` so that the function can log and publish messages to the alerting Pub/Sub topic.
+5. `function_memory` is an optional variable that can be assigned per function. The default is 128, but if a function requires more memory, it can be specified in `.tfvars` like `function_memory = 256`
 
 ## Cloud Function Requirements
 
