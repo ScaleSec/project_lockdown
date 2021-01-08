@@ -39,6 +39,9 @@ def pubsub_trigger(data, context):
     gc.collect()
 
 def check_resource(project_id, firewall_name):
+    """
+    Checks the firewall for 0.0.0.0/0 and disables the firewall if found.
+    """
     logging.info(f'Received firewall create/update log from Pub/Sub in an enabled project. Checking firewall: {firewall_name} for enablement status.')
 
     # Determine if CFN is running in view-only mode
@@ -89,18 +92,20 @@ def check_resource(project_id, firewall_name):
     del compute_client
 
 def describe_firewall(compute_client, firewall_name, project_id):
-    """ Gets information about the firewall
+    """
+    Gets information about the firewall
     """
     try:
         request = compute_client.firewalls().get(project=project_id, firewall=firewall_name)
         response = request.execute(num_retries=5)
     except:
-        logging.info(f'Could not retrieve enablement status for {firewall_name}.')
+        logging.error(f'Could not retrieve enablement status for {firewall_name}.')
         raise
     return response
 
 def disable_firewall(compute_client, firewall_name, project_id):
-    """ Disables a firewall rule
+    """
+    Disables a firewall rule
     """
     firewall_body = {
     "name": firewall_name,
@@ -110,7 +115,7 @@ def disable_firewall(compute_client, firewall_name, project_id):
         request = compute_client.firewalls().patch(project=project_id, firewall=firewall_name, body=firewall_body)
         response = request.execute(num_retries=5)
     except:
-        logging.info(f'Could not disable firewall: {firewall_name}.')
+        logging.error(f'Could not disable firewall: {firewall_name}.')
         raise
 
 def create_service():
