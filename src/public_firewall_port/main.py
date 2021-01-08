@@ -4,16 +4,42 @@ import logging
 import gc
 
 from os import getenv
-from lockdown_logging import create_logger # pylint: disable=import-error
-from lockdown_pubsub import publish_message # pylint: disable=import-error
 from googleapiclient.discovery_cache.base import Cache
 import googleapiclient.discovery
 
+from lockdown_logging import create_logger # pylint: disable=import-error
+from lockdown_pubsub import publish_message # pylint: disable=import-error
+from lockdown_checklist import check_list # pylint: disable=import-error
 
 def pubsub_trigger(data, context):
     """
     Used with Pub/Sub trigger method to evaluate firewall rules with 0.0.0.0/0 source ingress.
     """
+
+    # Integrates cloud logging handler to python logging
+    create_logger()
+
+    # Converting log to json
+    data_buffer = b64decode(data['data'])
+    log_entry = json.loads(data_buffer)
+
+    # Parse project id and resource name for allow/deny list checking and remediation
+    resource_name = log_entry['protoPayload']['resourceName'].split('/')
+    project_id = resource_name[1]
+    firewall_name = resource_name[-1]
+
+    if check_list(project_id):
+        logging.info(f'The project {project_id} is not in the allowlist, is in the denylist, or a list is not fully configured. Continuing evaluation.')
+        check_resource(project_id, firewall_name)
+    else:
+        logging.info(f'The project {project_id} is in the allowlist or is not in the denylist. No action being taken.')
+
+    # This function sits around 133mb of memory usage at creation date, if we don't cleanup, high activity projects may run into issues.
+    del log_entry
+    gc.collect()
+
+def check_resource(project_id, firewall_name):
+    logging.info(f'Received firewall create/update log from Pub/Sub in an enabled project. Checking firewall: {firewall_name} for enablement status.')
 
     # Determine if CFN is running in view-only mode
     try:
@@ -29,20 +55,6 @@ def pubsub_trigger(data, context):
 
     # Create compute client to make API calls
     compute_client = create_service()
-
-    # Integrates cloud logging handler to python logging
-    create_logger()
-
-    # Converting log to json
-    data_buffer = b64decode(data['data'])
-    log_entry = json.loads(data_buffer)
-
-    # Get firewall_name from log event and remove project identifiers
-    resource_name = log_entry['protoPayload']['resourceName'].split('/')
-    logging.info(f'Received firewall create/update log from Pub/Sub. Checking firewall: {resource_name} for enablement status.')
-    del log_entry
-    firewall_name = resource_name[-1]
-    project_id = resource_name[1]
 
     # Get firewall information
     firewall_metadata = describe_firewall(compute_client, firewall_name, project_id)
@@ -73,9 +85,8 @@ def pubsub_trigger(data, context):
     else:
         logging.info(f"The firewall rule: {firewall_name} is not enabled or 0.0.0.0/0 was removed.")
 
-    # This function sits around 133mb of memory usage at creation date, if we don't cleanup, high activity projects may run into issues.
+    # More cleanup
     del compute_client
-    gc.collect()
 
 def describe_firewall(compute_client, firewall_name, project_id):
     """ Gets information about the firewall
