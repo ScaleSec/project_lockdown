@@ -4,13 +4,19 @@ import logging
 
 from os import getenv
 from google.cloud import bigquery
+
 from lockdown_logging import create_logger # pylint: disable=import-error
 from lockdown_pubsub import publish_message # pylint: disable=import-error
+from lockdown_checklist import check_list # pylint: disable=import-error
 
 def pubsub_trigger(data, context):
     """
     Used with Pub/Sub trigger method to evaluate the BigQuery Dataset for public members.
     """
+
+    # Integrates cloud logging handler to python logging
+    create_logger()
+    logging.info('Received BigQuery dataset permissions update log from Pub/Sub. Checking for public access.')
 
     # Determine if CFN is running in view-only mode
     try:
@@ -27,11 +33,6 @@ def pubsub_trigger(data, context):
     #Create BigQuery Client
     client = bigquery.Client()
 
-    # Integrates cloud logging handler to python logging
-    create_logger()
-
-    logging.info('Received BigQuery permissions update log from Pub/Sub. Checking for public access.')
-
     # Converting log to json
     data_buffer = base64.b64decode(data['data'])
     log_entry = json.loads(data_buffer)
@@ -40,41 +41,47 @@ def pubsub_trigger(data, context):
     dataset_log = log_entry['resource']['labels']['dataset_id']
     project_id = log_entry['resource']['labels']['project_id']
 
-    # Create the fully-qualified dataset ID in standard SQL format
-    data_vars = [project_id, dataset_log]
-    dataset_id = '.'.join(data_vars)
+    # Check our project_id against the project list set at deployment
+    if check_list(project_id):
+        logging.info(f'The project {project_id} is not in the allowlist, is in the denylist, or a list is not fully configured. Continuing evaluation.')
 
-    try:
-        # Create Dataset object
-        dataset = client.get_dataset(dataset_id)
-    except:
-        logging.info(f'Could not access BigQuery Dataset {dataset_id}')
+        # Create the fully-qualified dataset ID in standard SQL format
+        data_vars = [project_id, dataset_log]
+        dataset_id = '.'.join(data_vars)
 
-    # Evaluate the dataset
-    private_access_entry = eval_dataset(dataset, dataset_log, project_id)
-
-    if private_access_entry:
-        finding_type = "public_bigquery_dataset"
-        # Set our pub/sub message
-        message = f"Found public members on bigquery dataset: {dataset_log} in project: {project_id}."
-        # Publish message to Pub/Sub
-        logging.info('Publishing message to Pub/Sub.')
         try:
-            publish_message(finding_type, mode, dataset_log, project_id, message, topic_id)
-            logging.info(f'Published message to {topic_id}')
+            # Create Dataset object
+            dataset = client.get_dataset(dataset_id)
         except:
-            logging.error(f'Could not publish message to {topic_id}')
-            raise
-        # if the function is running in "write" mode, remove public members
-        if mode == "write":
-            logging.info('Lockdown is in write mode. Removing public IAM members from dataset.')
-            # Remove public members
-            update_dataset(client, private_access_entry, dataset_id, dataset)
-        # if function is in read mode, take no action and publish message to pub/sub
-        if mode == "read":
-            logging.info('Lockdown is in read-only mode. Taking no action.')
+            logging.info(f'Could not access BigQuery Dataset {dataset_id}')
+
+        # Evaluate the dataset
+        private_access_entry = eval_dataset(dataset, dataset_log, project_id)
+
+        if private_access_entry:
+            finding_type = "public_bigquery_dataset"
+            # Set our pub/sub message
+            message = f"Found public members on bigquery dataset: {dataset_log} in project: {project_id}."
+            # Publish message to Pub/Sub
+            logging.info('Publishing message to Pub/Sub.')
+            try:
+                publish_message(finding_type, mode, dataset_log, project_id, message, topic_id)
+                logging.info(f'Published message to {topic_id}')
+            except:
+                logging.error(f'Could not publish message to {topic_id}')
+                raise
+            # if the function is running in "write" mode, remove public members
+            if mode == "write":
+                logging.info('Lockdown is in write mode. Removing public IAM members from dataset.')
+                # Remove public members
+                update_dataset(client, private_access_entry, dataset_id, dataset)
+            # if function is in read mode, take no action and publish message to pub/sub
+            if mode == "read":
+                logging.info('Lockdown is in read-only mode. Taking no action.')
+        else:
+            logging.info(f'No public members found. Taking no action on BigQuery dataset: {dataset_id}')
     else:
-        logging.info(f'No public members found. Taking no action on BigQuery dataset: {dataset_id}')
+        logging.info(f'The project {project_id} is in the allowlist or is not in the denylist. No action being taken.')
 
 
 def eval_dataset(dataset, dataset_log, project_id):
