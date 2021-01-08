@@ -54,10 +54,7 @@
 #     function_perms = ["logging.logEntries.create", "pubsub.topics.publish", "container.clusters.get", "container.clusters.update"],
 #   }
 #   public_firewall_port = {
-#     org_id = "123456",
-#     project = "test_project",
-#     region = "us-east1",
-#     mode   = "read",
+#     lockdown_project = "test_project",
 #     name   = "fwrule",
 #     function_memory = 256,
 #     log_sink_filter = "resource.type=\"gce_firewall_rule\" AND (protoPayload.methodName=\"v1.compute.firewalls.insert\" OR protoPayload.methodName=\"v1.compute.firewalls.update\" OR protoPayload.methodName=\"v1.compute.firewalls.patch\") AND NOT protoPayload.request.disabled=true AND operation.last=true AND NOT protoPayload.authenticationInfo.principalEmail",
