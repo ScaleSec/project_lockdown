@@ -4,24 +4,25 @@ import logging
 
 from os import getenv
 from google.cloud import storage
+
 from lockdown_logging import create_logger # pylint: disable=import-error
 from lockdown_pubsub import publish_message # pylint: disable=import-error
+from lockdown_checklist import check_list # pylint: disable=import-error
 
 def pubsub_trigger(data, context):
     """
     Used with Pub/Sub trigger method to evaluate bucket for public access and remediate if public access exists.
     """
 
+    # Integrates cloud logging handler to python logging
+    create_logger()
+    logging.info('Received GCS permissions update log from Pub/Sub. Checking for public access.')
+
     # Determine if CFN is running in view-only mode
     try:
         mode = getenv('MODE')
     except:
         logging.error('Mode not found in environment variable.')
-
-    # Integrates cloud logging handler to python logging
-    create_logger()
-
-    logging.info('Received GCS permissions update log from Pub/Sub. Checking for public access.')
 
     # Converting log to json
     data_buffer = base64.b64decode(data['data'])
@@ -31,18 +32,23 @@ def pubsub_trigger(data, context):
     bucket_name = log_entry['resource']['labels']['bucket_name']
     project_id = log_entry['resource']['labels']['project_id']
 
-    # Configuring storage client
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(bucket_name)
+    # Check our project_id against the project list set at deployment
+    if check_list(project_id):
+        logging.info(f'The project {project_id} is not in the allowlist, is in the denylist, or a list is not fully configured. Continuing evaluation.')
+        # Configuring storage client
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(bucket_name)
 
-    # Get the current GCS bucket policy
-    try:
-        policy = bucket.get_iam_policy()
-    except:
-        logging.error(f'Could not view bucket: {bucket_name} IAM policy.')
+        # Get the current GCS bucket policy
+        try:
+            policy = bucket.get_iam_policy()
+        except:
+            logging.error(f'Could not view bucket: {bucket_name} IAM policy.')
 
-    # Evaluating GCS bucket policy for public bindings
-    eval_bucket(bucket_name, policy, bucket, project_id, mode)
+        # Evaluating GCS bucket policy for public bindings
+        eval_bucket(bucket_name, policy, bucket, project_id, mode)
+    else:
+        logging.info(f'The project {project_id} is in the allowlist or is not in the denylist. No action being taken.')
 
 def eval_bucket(bucket_name, policy, bucket, project_id, mode):
     """
@@ -57,10 +63,8 @@ def eval_bucket(bucket_name, policy, bucket, project_id, mode):
     for role in policy:
         # Empty list to add public IAM bindings to
         member_bindings_to_remove = {}
-
         # For each IAM binding, find the members
         members = policy[role]
-
         # For every member, check if they are public
         for member in members:
             if member == "allAuthenticatedUsers" or member == "allUsers":
@@ -69,7 +73,6 @@ def eval_bucket(bucket_name, policy, bucket, project_id, mode):
                 logging.info(f'Found public member: {member} with role: {role} on bucket: {bucket_name} in project: {project_id}.')
             else:
                 logging.info(f'Member {member} with role {role} is not public.')
-        # If there are public members, check the cloudfunctions mode
         if member_bindings_to_remove:
             # If we have public members, we set this variable to trigger our Pub/Sub message publish
             public = "true"
@@ -90,7 +93,7 @@ def eval_bucket(bucket_name, policy, bucket, project_id, mode):
         # Set our pub/sub message
         message = f"Found public members on bucket: {bucket_name} in project: {project_id}."
         # Publish message to Pub/Sub
-        logging.info(f'Publishing message to Pub/Sub.')
+        logging.info('Publishing message to Pub/Sub.')
         try:
             publish_message(finding_type, mode, bucket_name, project_id, message, topic_id)
             logging.info(f'Published message to {topic_id}')
