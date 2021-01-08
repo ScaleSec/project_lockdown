@@ -100,6 +100,8 @@ data "archive_file" "source" {
 resource "google_storage_bucket" "cfn_bucket" {
   project = var.project
   name    = "${lower(var.name)}-${var.function_name}_cfn_bucket_${var.project}"
+  
+  uniform_bucket_level_access = true
 }
 
 ## Cloud Function source file upload
@@ -117,10 +119,10 @@ resource "google_cloudfunctions_function" "cfn" {
   available_memory_mb   = var.function_memory
   source_archive_bucket = google_storage_bucket.cfn_bucket.name
   source_archive_object = google_storage_bucket_object.cfn_source_archive.name
-  timeout               = 60
+  timeout               = 300
   entry_point           = "pubsub_trigger"
   service_account_email = google_service_account.cfn_sa.email
-  runtime               = "python38"
+  runtime               = "python37"
 
   event_trigger {
     event_type = "google.pubsub.topic.publish"
