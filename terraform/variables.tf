@@ -48,3 +48,8 @@ variable "project_list" {
   description = "A list of project IDs to use as a denylist or allowlist."
   type        = string
 }
+
+variable "function_memory" {
+  type        = number
+  description = "Memory available to a function"
+}
