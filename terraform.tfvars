@@ -60,4 +60,10 @@
 #     log_sink_filter = "resource.type=\"gce_firewall_rule\" AND (protoPayload.methodName=\"v1.compute.firewalls.insert\" OR protoPayload.methodName=\"v1.compute.firewalls.update\" OR protoPayload.methodName=\"v1.compute.firewalls.patch\") AND NOT protoPayload.request.disabled=true AND operation.last=true AND NOT protoPayload.authenticationInfo.principalEmail",
 #     function_perms  = ["logging.logEntries.create", "pubsub.topics.publish", "compute.firewalls.get", "compute.firewalls.update", "compute.networks.updatePolicy"],
 #   }
+#   public_pubsub_topic = {
+#     lockdown_project = "test_project",
+#     name   = "publictopic",
+#     log_sink_filter = "resource.type=\"pubsub_topic\" AND protoPayload.methodName=\"google.iam.v1.IAMPolicy.SetIamPolicy\" AND NOT protoPayload.authenticationInfo.principalEmail",
+#     function_perms  = ["logging.logEntries.create", "pubsub.topics.publish", "pubsub.topics.setIamPolicy", "pubsub.topics.getIamPolicy"],
+#   }
 # }

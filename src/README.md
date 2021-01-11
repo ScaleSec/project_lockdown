@@ -29,3 +29,6 @@ All lockdown remediation functions are triggered via a Pub/Sub push message base
 
 ### Disable Firewalls with 0.0.0.0/0 ingress source ranges
 - This remediation will monitor for updates to existing firewalls and creation of new firewalls. It will check for 0.0.0.0/0 in source ranges of the firewall, and if it does exist, disable the firewall and log the finding to Pub/Sub.
+
+### Remove Public IAM bindings from Pub/Sub Topics
+- This remediation will monitor for IAM policy updates on Pub/Sub Topics and search for the public `allUsers` and `allAuthenticatedUsers` IAM bindings. If a public IAM member is currently assigned to the topic, the function will remove the binding(s) and log the finding to Pub/Sub.
