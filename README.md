@@ -6,17 +6,17 @@
 ![Code Coverage](./.coverage.svg) [![GitHub Super-Linter](https://github.com/ScaleSec/project_lockdown/workflows/Lint%20Code%20Base/badge.svg)](https://github.com/marketplace/actions/super-linter)
 
 ## Introduction
-Project Lockdown is a suite of serverless event-driven auto remediation Cloud Functions designed to react to unsecure resource creations or configurations. Project Lockdown is meant to be deployed in a GCP environment and has the capabilities to monitor and remediate across your entire Organization hierarchy in a matter of seconds. 
+Project Lockdown is a collection of serverless event-driven auto remediation Cloud Functions designed to react to unsecure resource creations or configurations. Project Lockdown is meant to be deployed in a GCP environment and has the capabilities to monitor and remediate across your entire Organization hierarchy in a matter of seconds. 
 
 ## Why is this needed?
 Project Lockdown was born out of a common theme from our customers - there are certain configurations or events that they do not want to happen but there are currently no provider-native controls available to prevent these actions. For example, making a [GCS bucket](https://cloud.google.com/storage/docs/access-control/making-data-public) or [BigQuery dataset](https://cloud.google.com/bigquery/docs/datasets-intro) that stores sensitive information public puts your data at risk and it can only take minutes for malicious individuals to find those resources and exfiltrate data. 
 
-There are compensating controls like the Organization Policy [constraint](https://cloud.google.com/resource-manager/docs/organization-policy/org-policy-constraints) `constraints/iam.allowedPolicyMemberDomains` that attempt to prevent GCS buckets from being made public but have potentially negative side effects. Organizations must constantly keep a running list of G Suite IDs and track where and when hierarchies are broken which may be viewed as too much effort.
+There are compensating controls like the Organization Policy [constraint](https://cloud.google.com/resource-manager/docs/organization-policy/org-policy-constraints) `constraints/iam.allowedPolicyMemberDomains` that attempt to prevent GCS buckets from being made public but have potentially negative side effects. Organizations must constantly keep a running list of Google Workspace IDs (formally G Suite) and also track where and when hierarchies are broken which adds operational overhead.
 
 Project Lockdown aims to be a safe, lightweight, and inexpensive tool to increase your security posture.
 
 ## How does it work?
-Project Lockdown works by using a very efficient data flow that takes advantage of GCP's [Cloud Logging](https://cloud.google.com/logging/docs/basic-concepts) advanced query log sinks. By configuring a filter (query) as specific as possible on the log sink Project Lockdown will only invocate a Cloud Function when necessary to remediate events deemed high risk or unsecure. 
+Project Lockdown works by using a very efficient data flow that takes advantage of GCP's [Cloud Logging](https://cloud.google.com/logging/docs/basic-concepts) advanced query log sinks. By configuring a filter (query) as specific as possible on the log sink, Project Lockdown will only invocate a Cloud Function when necessary to remediate events deemed high risk or unsecure. 
 
 When a target event is captured by the log sink it is sent to a Cloud Pub/Sub topic that triggers a Cloud Function automatically. This Cloud Function analyzes the event payload and extracts the data necessary for it to evaluate the current resource's configuration. If the Cloud Function determines that the resource is misconfigured according to its evaluation logic it will remediate the resource and reconfigure it in a safe manner. Typically, the action taken by the Cloud Function is a reversal of the event. If a bucket was made public, it is made private, but if a SSL policy is created using `TLS 1.0`, it will be updated to `TLS 1.1`. 
 
