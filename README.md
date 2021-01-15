@@ -32,11 +32,14 @@ Project Lockdown will submit a message to a Pub/Sub topic for each finding it en
 ## Allowlist or Denylist functionality
 Project Lockdown supports an allowlist or denylist on a per remediation basis or one to cover all remediations. To configure an allowlist or denylist follow the below steps:
 
-- Set the `list_type` variable to either `allow` or `deny` depending on the type of list you'd like. You can set this inside each `enabled_modules` key or outside (to apply to all remediations)
+- Set the `list_type` variable to either `allow` or `deny` depending on the type of list you'd like. You can set this inside each `enabled_modules` key or outside (to apply to all remediations).
 - Supply a list of comma separated (no spaces) project IDs enclosed by double quotes to the variable `project_list`. For example: "project123,projectabc,project-1"
 
 ## Remediation Scenarios
-For details around what scenarios Project Lockdown remediates, see the [README.md](./src/README.md).
+For details around what scenarios Project Lockdown remediates, view the [documentation](./src/README.md).
+
+## Log Filters
+To view which log events Project Lockdown monitors for, view the [documentation](./docs/LOGFILTERS.md).
 
 ## Can I contribute or request features?
 Project Lockdown is under active development and we welcome any questions, bug reports, feature requests or enhancements via a GitHub Issue or Pull Request. If you plan to contribute to Project Lockdown please follow our [Contribution Guidelines](docs/CONTRIBUTING.md) for suggestions and requirements.
