@@ -18,7 +18,7 @@ def pubsub_trigger(data, context):
     Used with Pub/Sub trigger method to evaluate Cloud KMS resources 
     for public access and remediate if public access exists.
 
-    Arguments:
+    Args:
 
     data - Contains the Pub/Sub message 
     context -  The Cloud Functions event metdata
@@ -68,15 +68,15 @@ def pubsub_trigger(data, context):
             kms_resource_name = client.key_ring_path(project_id, location, key_ring_id)
             
         # Get our KMS resource IAM bindings (an IAM policy)
-        kms_iam_binding = get_kms_iam_bindings(client, kms_resource_name)
+        kms_iam_policy = get_kms_iam_bindings(client, kms_resource_name)
         
         # Evaluate the IAM policy for public members:
-        member_bindings_to_remove = evaluate_iam_bindings(kms_iam_binding)
+        private_iam_policy = evaluate_iam_bindings(kms_iam_policy, kms_resource_name, project_id)
 
         # If public members were found
         # Send a pub/sub message for alerting
         # Update IAM policy if lockdown is in write mode
-        if member_bindings_to_remove:
+        if private_iam_policy:
             ###################
             ## Pub/Sub Logic ##
             ###################
@@ -107,11 +107,10 @@ def pubsub_trigger(data, context):
             if mode == "write":
                 logging.info("Lockdown is in write mode. Removing public IAM members.")
                 # Removes the public IAM bindings from the KMS resource for this specific role
-                remove_public_iam_members_from_policy(client, kms_resource_name, member_bindings_to_remove)
+                remove_public_iam_members_from_policy(client, kms_resource_name, private_iam_policy, project_id)
             # if function is in read mode, take no action
             if mode == "read":
                 logging.info("Lockdown is in read-only mode. Taking no action.")
-
     else:
         logging.info("The project %s is in the allowlist or is not in the denylist. No action being taken.", project_id)
 
@@ -119,7 +118,7 @@ def get_kms_iam_bindings(client, kms_resource_name):
     """
     Retrieve the IAM bindings on the Cloud KMS key ring
 
-    Arguments:
+    Args:
     client - Cloud KMS client. Used to call methods.
     kms_resource_name - The Cloud KMS key ring resource name
 
@@ -128,81 +127,82 @@ def get_kms_iam_bindings(client, kms_resource_name):
     kms_iam_policy - The IAM policy (collection of bindings)
     """
 
-    # Get the IAM policy for the crypto key ring
+    logging.info("Getting IAM policy on Cloud KMS resource: %s",kms_resource_name)
+
+    # Get the IAM policy for the Cloud KMS resource
     try:
         kms_iam_policy = client.get_iam_policy(request={"resource": kms_resource_name})
     except exceptions.PermissionDenied as perm_err:
         logging.error(perm_err)
         sys.exit(1)
-    print(kms_iam_policy)
 
     return kms_iam_policy
 
-def evaluate_iam_bindings(kms_iam_policy):
+def evaluate_iam_bindings(kms_iam_policy, kms_resource_name, project_id):
     """
     Checks IAM policies bindings for public 
     members "allUsers" and "allAuthenticatedUsers"
 
-    Arguments:
+    Args:
 
     kms_iam_policy - The IAM policy attached to the resource.
+    kms_resource_name - The Cloud KMS resource name.
+    project_id - The GCP project where the KMS resource lives.
 
     Returns:
 
     member_bindings_to_remove - The public IAM bindings from the Cloud KMS resource.
     """
 
-    for role in kms_iam_policy:
-        # Empty list to add public IAM bindings to
-        member_bindings_to_remove = {}
-        # For each IAM binding, find the members
-        members = kms_iam_policy[role]
-        # For every member, check if they are public
-        for member in members:
-            if member == "allAuthenticatedUsers" or member == "allUsers":
-                # Add member and role to list if member is public
-                member_bindings_to_remove[member] = role
-                logging.info(f"Found public member: {member} with role: {role}.")
-            else:
-                logging.info(f"Member {member} with role {role} is not public.")
-    # If public members were found, return new private IAM bindings list
-    if member_bindings_to_remove:
-        logging.info("Found public members: %s", member_bindings_to_remove)
-        return member_bindings_to_remove
+    logging.info("Evaluating IAM bindings on Cloud KMS resource: %s", kms_resource_name)
+    # Create the public users list to reference when creating new members.
+    public_users = ["allAuthenticatedUsers", "allUsers"]
+
+    # Evaluate each binding in the IAM policy
+    for binding in kms_iam_policy.bindings:
+        members = binding.members
+        for member in reversed(members):
+            if member in public_users:
+                logging.info("Found a public member on Cloud KMS resource: %s in project: %s", kms_resource_name, project_id)
+                # Remove the public binding from the IAM policy
+                binding.members.remove(member)
+                # This local variable is used to return the new policy
+                # if public member(s) are found
+                public = "true"
+
+    # If we set a local variable of "public"
+    # return the new KMS IAM policy
+    if "public" in locals():
+        return kms_iam_policy
     else:
-        logging.info("No public members found.")
+        logging.info("The IAM policy on the Cloud KMS resource: %s is private.", kms_resource_name)
         sys.exit(0)
 
-def remove_public_iam_members_from_policy(client, kms_resource_name, member_bindings_to_remove):
+def remove_public_iam_members_from_policy(client, kms_resource_name, private_iam_policy, project_id):
     """
     Takes a dictionary of roles with public members 
     and removes them from the Cloud KMS resource.
 
-    Arguments:
+    Args:
 
     client - Cloud KMS client. Used to call methods. 
     kms_resource_name - The Cloud KMS resource name
     member_bindings_to_remove - List of public IAM bindings to remove.
+    project_id - The GCP project where the Cloud KMS resource lives
     """
 
-    # Re-checks the KMS resource policy to catch previously made updates
-    # This is critical in the event that a user makes a `setIamPolicy` API call
-    # with 1> member and >=2 roles due to the way we iterate over roles
+    logging.info("Updating IAM policy on Cloud KMS resource: %s", kms_resource_name)
 
-    try:
-        kms_iam_policy = get_kms_iam_bindings(client, kms_resource_name)
-    except exceptions.PermissionDenied as perm_err:
-        logging.error(perm_err)
-        sys.exit(1)
-
-    # Remove public members from KMS resource policy
-    for member in member_bindings_to_remove:
-        kms_iam_policy[member_bindings_to_remove[member]].discard(member)
-
+    # Create the request body to update the IAM policy
+    request = {
+        'resource': kms_resource_name,
+        'policy': private_iam_policy
+    }
+    
     # Set the new KMS resource policy
     try:
-        client.set_iam_policy(kms_resource_name, kms_iam_policy)
-        logging.info("Finished updating the IAM permissions on KMS resource: %s for role: %s", kms_resource_name, member_bindings_to_remove[member])
+        client.set_iam_policy(request=request)
+        logging.info("Finished updating the IAM permissions on KMS resource: %s in project: %s", kms_resource_name, project_id)
     except:
-        logging.error("Could not update the IAM permissions on KMS resource: %s", kms_resource_name)
+        logging.error("Could not update the IAM permissions on KMS resource: %s in project %s", kms_resource_name, project_id)
         raise
