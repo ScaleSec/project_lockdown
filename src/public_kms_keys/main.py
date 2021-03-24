@@ -161,10 +161,12 @@ def evaluate_iam_bindings(kms_iam_policy, kms_resource_name, project_id):
     # Evaluate each binding in the IAM policy
     for binding in kms_iam_policy.bindings:
         members = binding.members
+        # Iterate in reverse because we remove strings
+        # if they are public
         for member in reversed(members):
             if member in public_users:
                 logging.info("Found a public member on Cloud KMS resource: %s in project: %s", kms_resource_name, project_id)
-                # Remove the public binding from the IAM policy
+                # Remove the public member from the IAM binding
                 binding.members.remove(member)
                 # This local variable is used to return the new policy
                 # if public member(s) are found
