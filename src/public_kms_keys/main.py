@@ -38,7 +38,8 @@ def pubsub_trigger(data, context):
     data_buffer = base64.b64decode(data['data'])
     log_entry = json.loads(data_buffer)
 
-    # If it isn't a key and only key ring, we only need 3 below
+    # If it isn't a crypto key update 
+    # and only key ring, we only need 3 below
     key_ring_id = log_entry['resource']['labels']['key_ring_id']
     location = log_entry['resource']['labels']['location']
     project_id = log_entry['resource']['labels']['project_id']
@@ -49,7 +50,8 @@ def pubsub_trigger(data, context):
         # Create the Cloud KMS client
         client = kms.KeyManagementServiceClient()
 
-        # If its a key perm update versus a key ring update:
+        # If its a crpyto key perm update 
+        # versus a key ring update:
         if log_entry['resource']['type'] ==  "cloudkms_cryptokey":
             # create our crypto key var from the log file
             logging.info("Cloud KMS crypto key found in log.")
@@ -120,14 +122,14 @@ def get_kms_iam_bindings(client, kms_resource_name):
 
     Args:
     client - Cloud KMS client. Used to call methods.
-    kms_resource_name - The Cloud KMS key ring resource name
+    kms_resource_name - The Cloud KMS resource name.
 
     Returns:
 
     kms_iam_policy - The IAM policy (collection of bindings)
     """
 
-    logging.info("Getting IAM policy on Cloud KMS resource: %s",kms_resource_name)
+    logging.info("Getting IAM policy on Cloud KMS resource: %s", kms_resource_name)
 
     # Get the IAM policy for the Cloud KMS resource
     try:
@@ -151,7 +153,7 @@ def evaluate_iam_bindings(kms_iam_policy, kms_resource_name, project_id):
 
     Returns:
 
-    member_bindings_to_remove - The public IAM bindings from the Cloud KMS resource.
+    kms_iam_policy - The private IAM policy for Cloud KMS resource.
     """
 
     logging.info("Evaluating IAM bindings on Cloud KMS resource: %s", kms_resource_name)
@@ -188,8 +190,8 @@ def remove_public_iam_members_from_policy(client, kms_resource_name, private_iam
     Args:
 
     client - Cloud KMS client. Used to call methods. 
-    kms_resource_name - The Cloud KMS resource name
-    member_bindings_to_remove - List of public IAM bindings to remove.
+    kms_resource_name - The Cloud KMS resource name.
+    private_iam_policy - The private IAM policy for Cloud KMS resource.
     project_id - The GCP project where the Cloud KMS resource lives
     """
 
