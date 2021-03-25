@@ -15,12 +15,12 @@ from lockdown_checklist import check_list # pylint: disable=import-error
 
 def pubsub_trigger(data, context):
     """
-    Used with Pub/Sub trigger method to evaluate Cloud KMS resources 
+    Used with Pub/Sub trigger method to evaluate Cloud KMS resources
     for public access and remediate if public access exists.
 
     Args:
 
-    data - Contains the Pub/Sub message 
+    data - Contains the Pub/Sub message
     context -  The Cloud Functions event metdata
     """
 
@@ -38,7 +38,7 @@ def pubsub_trigger(data, context):
     data_buffer = base64.b64decode(data['data'])
     log_entry = json.loads(data_buffer)
 
-    # If it isn't a crypto key update 
+    # If it isn't a crypto key update
     # and only key ring, we only need 3 below
     key_ring_id = log_entry['resource']['labels']['key_ring_id']
     location = log_entry['resource']['labels']['location']
@@ -46,11 +46,11 @@ def pubsub_trigger(data, context):
 
     # Check our project_id against the project list set at deployment
     if check_list(project_id):
-        logging.info(f'The project {project_id} is not in the allowlist, is in the denylist, or a list is not fully configured. Continuing evaluation.')
+        logging.info("The project %s is not in the allowlist, is in the denylist, or a list is not fully configured. Continuing evaluation.", project_id)
         # Create the Cloud KMS client
         client = kms.KeyManagementServiceClient()
 
-        # If its a crpyto key perm update 
+        # If its a crpyto key perm update
         # versus a key ring update:
         if log_entry['resource']['type'] ==  "cloudkms_cryptokey":
             # create our crypto key var from the log file
@@ -61,17 +61,17 @@ def pubsub_trigger(data, context):
             kms_resource_name = client.crypto_key_path(project_id, location, key_ring_id, crypto_key_id)
 
         # If it is not a key perm update, we assume it is a key ring update
-        # This assumption is based off of the log filter 
+        # This assumption is based off of the log filter
         # which only catches 2 resources:
         # resource.type="cloudkms_cryptokey" OR resource.type="cloudkms_keyring"
         else:
             logging.info("Cloud KMS key ring found in log.")
             # Create our key ring resource name using log variables
             kms_resource_name = client.key_ring_path(project_id, location, key_ring_id)
-            
+
         # Get our KMS resource IAM bindings (an IAM policy)
         kms_iam_policy = get_kms_iam_bindings(client, kms_resource_name)
-        
+
         # Evaluate the IAM policy for public members:
         private_iam_policy = evaluate_iam_bindings(kms_iam_policy, kms_resource_name, project_id)
 
@@ -101,7 +101,7 @@ def pubsub_trigger(data, context):
             except:
                 logging.error("Could not publish message to %s", topic_id)
                 raise
-            
+
             #######################
             ## Remediation Logic ##
             #######################
@@ -142,7 +142,7 @@ def get_kms_iam_bindings(client, kms_resource_name):
 
 def evaluate_iam_bindings(kms_iam_policy, kms_resource_name, project_id):
     """
-    Checks IAM policies bindings for public 
+    Checks IAM policies bindings for public
     members "allUsers" and "allAuthenticatedUsers"
 
     Args:
@@ -184,12 +184,12 @@ def evaluate_iam_bindings(kms_iam_policy, kms_resource_name, project_id):
 
 def remove_public_iam_members_from_policy(client, kms_resource_name, private_iam_policy, project_id):
     """
-    Takes a dictionary of roles with public members 
+    Takes a dictionary of roles with public members
     and removes them from the Cloud KMS resource.
 
     Args:
 
-    client - Cloud KMS client. Used to call methods. 
+    client - Cloud KMS client. Used to call methods.
     kms_resource_name - The Cloud KMS resource name.
     private_iam_policy - The private IAM policy for Cloud KMS resource.
     project_id - The GCP project where the Cloud KMS resource lives
@@ -202,7 +202,7 @@ def remove_public_iam_members_from_policy(client, kms_resource_name, private_iam
         'resource': kms_resource_name,
         'policy': private_iam_policy
     }
-    
+
     # Set the new KMS resource policy
     try:
         client.set_iam_policy(request=request)
