@@ -10,7 +10,7 @@ All lockdown remediation functions are triggered via a Pub/Sub push message base
 - This remediation will monitor for create and update events in Cloud Logging for SSL policies. If the SSL policy is using TLS 1.0, the function will update the policy to use TLS 1.1 and log the finding to Pub/Sub.
 
 ## Disable Legacy auth (ABAC) on GKE clusters
-- Legacy authentication for GKE is considered unsecure and should be avoided. Organizations interested in using GKE should either use role-based authentication (RBAC) or GKE's [Workload Identity](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity). If a cluster is created with ABAC enabled or if a cluster is updated to enable ABAC, Project Lockdown will attempt to disable that setting for 5 minutes. If the 5 minute timeout is eclipsed, the function will gracefully timeout. 
+- Legacy authentication for GKE is considered unsecure and should be avoided. Organizations interested in using GKE should either use role-based authentication (RBAC) or GKE's [Workload Identity](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity). If a cluster is created with ABAC enabled or if a cluster is updated to enable ABAC, Project Lockdown will attempt to disable that setting for 5 minutes. If the 5 minute timeout is eclipsed, the function will gracefully timeout.
 
 ## Publicly Exposed Resources
 - Publicly exposed resources pose one of the largest attack targets in the cloud. Malicious actors are constantly scanning for public resources in order to exfiltrate customer data, gain access to customer's environments, or even sabotage with an aim to disrupt workloads. With this in mind, the main bulk of our first remediations are around keeping your resources private. We try to target scenarios where there are no current safeguards available from GCP (Organization Policy constraints, for example.)
@@ -33,5 +33,5 @@ All lockdown remediation functions are triggered via a Pub/Sub push message base
 ### Remove Public IAM bindings from Pub/Sub Topics
 - This remediation will monitor for IAM policy updates on Pub/Sub Topics and search for the public `allUsers` and `allAuthenticatedUsers` IAM bindings. If a public IAM member is currently assigned to the topic, the function will remove the binding(s) and log the finding to Pub/Sub.
 
-### Remove Public IAM bindings from Cloud KMS key rings and keys
-- This remediation will monitor for IAM policy updates on Cloud KMS key rings and keys and search for the public `allUsers` and `allAuthenticatedUsers` IAM bindings. If a public IAM member is currently assigned to the key ring or key, the function will remove the binding(s) and log the finding to Pub/Sub.
+### Remove Public IAM bindings from Cloud KMS key rings and crypto keys
+- This remediation will monitor for IAM policy updates on Cloud KMS key rings and crypto key and search for the public `allUsers` and `allAuthenticatedUsers` IAM bindings. If a public IAM member is currently assigned to the key ring or key, the function will remove the binding(s) and log the finding to Pub/Sub.
