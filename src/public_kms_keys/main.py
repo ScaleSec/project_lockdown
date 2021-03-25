@@ -4,8 +4,8 @@ import logging
 import sys
 
 from os import getenv
-from google.cloud import kms
-from google.api_core import exceptions
+from google.cloud import kms # pylint: disable=import-error
+from google.api_core import exceptions # pylint: disable=import-error
 
 
 from lockdown_logging import create_logger # pylint: disable=import-error
@@ -26,7 +26,7 @@ def pubsub_trigger(data, context):
 
     # Integrates cloud logging handler to python logging
     create_logger()
-    logging.info('Received Cloud KMS permissions update log from Pub/Sub. Checking for public access..')
+    logging.info('Received Cloud KMS permissions update log from Pub/Sub. Checking for public access..') # pylint: disable=line-too-long
 
     # Determine if CFN is running in view-only mode
     try:
@@ -46,7 +46,7 @@ def pubsub_trigger(data, context):
 
     # Check our project_id against the project list set at deployment
     if check_list(project_id):
-        logging.info("The project %s is not in the allowlist, is in the denylist, or a list is not fully configured. Continuing evaluation.", project_id)
+        logging.info("The project %s is not in the allowlist, is in the denylist, or a list is not fully configured. Continuing evaluation.", project_id) # pylint: disable=line-too-long
         # Create the Cloud KMS client
         client = kms.KeyManagementServiceClient()
 
@@ -58,7 +58,11 @@ def pubsub_trigger(data, context):
             crypto_key_id = log_entry['resource']['labels']['crypto_key_id']
 
             # Create our crypto key resource name using log variables
-            kms_resource_name = client.crypto_key_path(project_id, location, key_ring_id, crypto_key_id)
+            kms_resource_name = client.crypto_key_path(
+                project_id,
+                location,
+                key_ring_id,
+                crypto_key_id)
 
         # If it is not a key perm update, we assume it is a key ring update
         # This assumption is based off of the log filter
@@ -96,7 +100,13 @@ def pubsub_trigger(data, context):
             # Publish message to Pub/Sub
             logging.info("Publishing message to Pub/Sub.")
             try:
-                publish_message(finding_type, mode, kms_resource_name, project_id, message, topic_id)
+                publish_message(
+                    finding_type,
+                    mode,
+                    kms_resource_name,
+                    project_id,
+                    message,
+                    topic_id)
                 logging.info("Published message to %s", topic_id)
             except:
                 logging.error("Could not publish message to %s", topic_id)
@@ -109,12 +119,16 @@ def pubsub_trigger(data, context):
             if mode == "write":
                 logging.info("Lockdown is in write mode. Removing public IAM members.")
                 # Removes the public IAM bindings from the KMS resource for this specific role
-                remove_public_iam_members_from_policy(client, kms_resource_name, private_iam_policy, project_id)
+                remove_public_iam_members_from_policy(
+                    client,
+                    kms_resource_name,
+                    private_iam_policy,
+                    project_id)
             # if function is in read mode, take no action
             if mode == "read":
                 logging.info("Lockdown is in read-only mode. Taking no action.")
     else:
-        logging.info("The project %s is in the allowlist or is not in the denylist. No action being taken.", project_id)
+        logging.info("The project %s is in the allowlist or is not in the denylist. No action being taken.", project_id) # pylint: disable=line-too-long
 
 def get_kms_iam_bindings(client, kms_resource_name):
     """
@@ -167,7 +181,7 @@ def evaluate_iam_bindings(kms_iam_policy, kms_resource_name, project_id):
         # if they are public
         for member in reversed(members):
             if member in public_users:
-                logging.info("Found a public member on Cloud KMS resource: %s in project: %s", kms_resource_name, project_id)
+                logging.info("Found a public member on Cloud KMS resource: %s in project: %s", kms_resource_name, project_id) # pylint: disable=line-too-long
                 # Remove the public member from the IAM binding
                 binding.members.remove(member)
                 # This local variable is used to return the new policy
@@ -182,7 +196,7 @@ def evaluate_iam_bindings(kms_iam_policy, kms_resource_name, project_id):
         logging.info("The IAM policy on the Cloud KMS resource: %s is private.", kms_resource_name)
         sys.exit(0)
 
-def remove_public_iam_members_from_policy(client, kms_resource_name, private_iam_policy, project_id):
+def remove_public_iam_members_from_policy(client, kms_resource_name, private_iam_policy, project_id): # pylint: disable=line-too-long
     """
     Takes a dictionary of roles with public members
     and removes them from the Cloud KMS resource.
@@ -206,7 +220,7 @@ def remove_public_iam_members_from_policy(client, kms_resource_name, private_iam
     # Set the new KMS resource policy
     try:
         client.set_iam_policy(request=request)
-        logging.info("Finished updating the IAM permissions on KMS resource: %s in project: %s", kms_resource_name, project_id)
+        logging.info("Finished updating the IAM permissions on KMS resource: %s in project: %s", kms_resource_name, project_id) # pylint: disable=line-too-long
     except:
-        logging.error("Could not update the IAM permissions on KMS resource: %s in project %s", kms_resource_name, project_id)
+        logging.error("Could not update the IAM permissions on KMS resource: %s in project %s", kms_resource_name, project_id) # pylint: disable=line-too-long
         raise
