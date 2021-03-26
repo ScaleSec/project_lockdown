@@ -1,0 +1,2 @@
+google-cloud-kms
+google-cloud-logging
