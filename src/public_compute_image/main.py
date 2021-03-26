@@ -127,7 +127,7 @@ def eval_iam_policy(policy, image_id, project_id):
                     "role": binding["role"],
                     "members": sorted(new_members)
                 }
-                # Use the same condition on mew IAM binding
+                # Use the same condition on new IAM binding
                 condition = binding.get("condition")
                 if condition:
                     new_binding["condition"] = condition

@@ -66,4 +66,10 @@
 #     log_sink_filter = "resource.type=\"pubsub_topic\" AND protoPayload.methodName=\"google.iam.v1.IAMPolicy.SetIamPolicy\" AND NOT protoPayload.authenticationInfo.principalEmail",
 #     function_perms  = ["logging.logEntries.create", "pubsub.topics.publish", "pubsub.topics.setIamPolicy", "pubsub.topics.getIamPolicy"],
 #   }
+#   public_kms_keys = {
+#     lockdown_project = "test_project",
+#     name   = "publickms",
+#     log_sink_filter = "protoPayload.serviceName=\"cloudkms.googleapis.com\" AND protoPayload.methodName=\"SetIamPolicy\" AND (resource.type=\"cloudkms_cryptokey\" OR resource.type=\"cloudkms_keyring\") AND (protoPayload.request.policy.bindings.members=\"allAuthenticatedUsers\" OR protoPayload.request.policy.bindings.members=\"allUsers\") AND NOT protoPayload.authenticationInfo.principalEmail",
+#     function_perms  = ["logging.logEntries.create", "pubsub.topics.publish", "cloudkms.cryptoKeys.getIamPolicy", "cloudkms.cryptoKeys.setIamPolicy", "cloudkms.keyRings.getIamPolicy", "cloudkms.keyRings.setIamPolicy"],
+#   }
 # }
