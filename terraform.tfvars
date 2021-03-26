@@ -66,4 +66,10 @@
 #     log_sink_filter = "resource.type=\"pubsub_topic\" AND protoPayload.methodName=\"google.iam.v1.IAMPolicy.SetIamPolicy\" AND NOT protoPayload.authenticationInfo.principalEmail",
 #     function_perms  = ["logging.logEntries.create", "pubsub.topics.publish", "pubsub.topics.setIamPolicy", "pubsub.topics.getIamPolicy"],
 #   }
+#   kms_key_rotation = {
+#     lockdown_project = "test_project",
+#     name   = "kmsrotation",
+#     log_sink_filter = "protoPayload.serviceName=\"cloudkms.googleapis.com\" AND (protoPayload.methodName=\"CreateCryptoKey\" OR protoPayload.methodName=\"UpdateCryptoKey\") AND resource.type=\"cloudkms_cryptokey\" AND NOT protoPayload.authenticationInfo.principalEmail",
+#     function_perms  = ["logging.logEntries.create", "pubsub.topics.publish", "cloudkms.cryptoKeys.get", "cloudkms.cryptoKeys.update"],
+#   }
 # }
