@@ -100,7 +100,7 @@ data "archive_file" "source" {
 resource "google_storage_bucket" "cfn_bucket" {
   project = var.lockdown_project
   name    = "${lower(var.name)}-${var.function_name}_cfn_bucket_${var.lockdown_project}"
-  
+
   uniform_bucket_level_access = true
 }
 
@@ -113,11 +113,11 @@ resource "google_storage_bucket_object" "cfn_source_archive" {
 
 ## Cloud Function
 resource "google_cloudfunctions_function" "cfn" {
-  name                  = local.function_name
-  description           = "Cloud Function to remediate ${var.function_name}."
+  name        = local.function_name
+  description = "Cloud Function to remediate ${var.function_name}."
 
-  project               = var.lockdown_project
-  available_memory_mb   = var.function_memory
+  project             = var.lockdown_project
+  available_memory_mb = var.function_memory
 
   source_archive_bucket = google_storage_bucket.cfn_bucket.name
   source_archive_object = google_storage_bucket_object.cfn_source_archive.name
@@ -132,9 +132,10 @@ resource "google_cloudfunctions_function" "cfn" {
   }
 
   environment_variables = {
-    MODE         = var.mode
-    TOPIC_ID     = var.topic_id
-    PROJECT_LIST = var.project_list
-    LIST_TYPE    = var.list_type
+    MODE            = var.mode
+    TOPIC_ID        = var.topic_id
+    PROJECT_LIST    = var.project_list
+    LIST_TYPE       = var.list_type
+    ROTATION_PERIOD = var.rotation_period
   }
 }

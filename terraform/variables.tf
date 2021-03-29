@@ -53,3 +53,9 @@ variable "function_memory" {
   type        = number
   description = "Memory available to a function"
 }
+
+variable "rotation_period" {
+  type        = number
+  default     = 90
+  description = "The approved rotation period, in days, for Cloud KMS keys."
+}

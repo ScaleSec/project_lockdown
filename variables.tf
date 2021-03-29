@@ -40,3 +40,9 @@ variable "project_list" {
   type        = string
   default     = "N/A"
 }
+
+variable "rotation_period" {
+  type        = number
+  default     = 90
+  description = "The approved rotation period, in days, for Cloud KMS keys."
+}
