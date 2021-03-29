@@ -83,7 +83,7 @@ def pubsub_trigger(data, context):
     crypto_key_metadata = get_key_data(client, key_name)
 
     # Get rotation period from key metadata
-    rotation_period = find_rotation_period(client, crypto_key_metadata)
+    rotation_period = find_rotation_period(crypto_key_metadata)
 
     # Review the rotation period against
     # approved rotation period. Defaults to 90d (7776000s)
@@ -116,7 +116,7 @@ def get_key_data(client, key_name):
 
     return crypto_key_metadata
 
-def find_rotation_period(client, crypto_key_metadata):
+def find_rotation_period(crypto_key_metadata):
     """
     Using the keys metadata, find the crypto keys rotation period
 
