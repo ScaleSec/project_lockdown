@@ -232,7 +232,7 @@ def review_rotation_period(rotation_period, crypto_key_metadata, crypto_key_id, 
     # Or if the rotation period is under
     elif rotation_period <= approved_rotation_period_seconds:
         logging.info(
-            "Cloud KMS crypto key %s has a rotation period less than the requirement of %s days. \n Exiting.",
+            "Cloud KMS crypto key %s has a rotation period less than the requirement of %s days. \n Exiting.", # pylint: disable=line-too-long
             crypto_key_metadata.name, approved_rotation_period
         )
 
