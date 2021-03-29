@@ -18,7 +18,7 @@ The following table contains the log sink filters (advanced log queries) used by
 | Firewall Rules | `resource.type="gce_firewall_rule" AND (protoPayload.methodName="v1.compute.firewalls.insert" OR protoPayload.methodName="v1.compute.firewalls.update" OR protoPayload.methodName="v1.compute.firewalls.patch") AND NOT protoPayload.request.disabled=true AND operation.last=true`
 | Pub/Sub Topics | `resource.type="pubsub_topic" AND protoPayload.methodName="google.iam.v1.IAMPolicy.SetIamPolicy"`
 | KMS Keys creations or updates | `protoPayload.serviceName="cloudkms.googleapis.com" AND (protoPayload.methodName="CreateCryptoKey" OR protoPayload.methodName="UpdateCryptoKey") AND resource.type="cloudkms_cryptokey"`
-| KMS Keys and key ring IAM policy public updates | `protoPayload.serviceName="cloudkms.googleapis.com" AND protoPayload.methodName="SetIamPolicy" AND (resource.type="cloudkms_cryptokey" OR resource.type="cloudkms_keyring") AND (protoPayload.request.policy.bindings.members="allAuthenticatedUsers" OR protoPayload.request.policy.bindings.members="allUsers")`
+| KMS Keys and key ring IAM policy public updates | `protoPayload.serviceName="cloudkms.googleapis.com" AND (protoPayload.methodName="CreateCryptoKey" OR (protoPayload.methodName="UpdateCryptoKey" AND protoPayload.request.updateMask=~"rotationPeriod")) AND resource.type="cloudkms_cryptokey"`
 
 
 
