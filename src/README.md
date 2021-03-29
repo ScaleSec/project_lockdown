@@ -38,3 +38,6 @@ All lockdown remediation functions are triggered via a Pub/Sub push message base
 
 ### Remove public IAM bindings from Pub/Sub topics
 - This remediation will monitor for IAM policy updates on Pub/Sub Topics and search for the public `allUsers` and `allAuthenticatedUsers` IAM bindings. If a public IAM member is currently assigned to the topic, the function will remove the binding(s) and log the finding to Pub/Sub.
+
+### Remove Public IAM bindings from Cloud KMS key rings and crypto keys
+- This remediation will monitor for IAM policy updates on Cloud KMS key rings and crypto key and search for the public `allUsers` and `allAuthenticatedUsers` IAM bindings. If a public IAM member is currently assigned to the key ring or key, the function will remove the binding(s) and log the finding to Pub/Sub.
