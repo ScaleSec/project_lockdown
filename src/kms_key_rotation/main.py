@@ -148,8 +148,9 @@ def find_rotation_period(client, crypto_key_metadata):
             crypto_key_metadata.name
         )
 
-        # Set the rotation period to None and return
-        rotation_period = None
+        # Set the rotation period to an unrealistic date
+        # In 2021, this date would be year 2295
+        rotation_period = 8639913600 # seconds
         return rotation_period
     # Return the rotation period for analysis
     else:
@@ -186,7 +187,7 @@ def review_rotation_period(rotation_period, crypto_key_metadata, crypto_key_id, 
 
     # Rotation period evaluation logic
     # If the rotation period on the crypto key is LONGER
-    if rotation_period > 7776000 or None: #TODO: move to user selected value
+    if rotation_period > 7776000: #TODO: move to user selected value
         logging.info(
             "Cloud KMS crypto key %s has an invalid rotation period.",
             crypto_key_metadata.name
