@@ -111,8 +111,8 @@ def get_key_data(client, key_name):
     logging.info("Getting %s metadata", key_name)
     try:
         crypto_key_metadata = client.get_crypto_key(name = key_name)
-    except:
-        print("Error") ##TODO: better error capture
+    except exceptions.PermissionDenied as perm_err:
+        logging.error("Error getting crypto key %s", perm_err)
 
     return crypto_key_metadata
 
@@ -136,8 +136,8 @@ def find_rotation_period(client, crypto_key_metadata):
         )
     else:
         logging.info(
-            "Cloud KMS crypto key %s is not using symmetric encryption, rotation periods are not supported. \n Exiting",
-            crypto_key_metadata.name # pylint: disable=line-too-long
+            "Cloud KMS crypto key %s is not using symmetric encryption, rotation periods are not supported. \n Exiting", # pylint: disable=line-too-long
+            crypto_key_metadata.name
         )
         sys.exit(0)
     # If the crypto key does not have a rotation period
@@ -192,7 +192,7 @@ def review_rotation_period(rotation_period, crypto_key_metadata, crypto_key_id, 
             "Cloud KMS crypto key %s has an invalid rotation period.",
             crypto_key_metadata.name
         ) ##TODO: Add user value
-        #logging.info("Cloud KMS crypto key rotation periods need to be %s or under", ) ##TODO: Custom value
+        #logging.info("Cloud KMS crypto key rotation periods need to be %s or under", ) ##TODO: Custom value # pylint: disable=line-too-long
 
         # Publish message to Pub/Sub
         logging.info("Publishing message to Pub/Sub.")
@@ -257,7 +257,7 @@ def update_rotation_period(crypto_key_metadata, crypto_key_id):
             "crypto_key": key,
             "update_mask": update_mask
             }
-        ) ##TODO: add better error handling
+        )
         logging.info("Update on %s successful.", crypto_key_id)
-    except:
-        logging.error("Error updating crypto key %s", crypto_key_name)
+    except exceptions.PermissionDenied as perm_err:
+        logging.error("Error updating crypto key %s", perm_err)
