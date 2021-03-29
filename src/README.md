@@ -15,6 +15,7 @@ All lockdown remediation functions are triggered via a Pub/Sub push message base
 ## Enforce Cloud KMS key rotation periods
 - Regularly rotating encryption (crypto) keys is an industry-standard best practice but not required by default in GCP. This remediation monitors for key creations and updates to rotation periods to verify that the rotation period value is set at or more frequently than an approved number of days.
 - For example, by default Project Lockdown sets the desired rotation period to 90 days, but this value is customizable. If a user creates a Cloud KMS key, and sets the rotation period to None, or 180 days, Project Lockdown would be invocated and would update the rotation period to 90 days.
+- This remediation also sets the key to be rotated in the next 24 hours.
 - __Note:__ Rotation periods are only supported for symmetric keys at this time in GCP.
 
 ## Publicly exposed resources

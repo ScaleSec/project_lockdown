@@ -180,22 +180,38 @@ def review_rotation_period(rotation_period, crypto_key_metadata, crypto_key_id, 
     topic_id - The pub/sub message topic ID.
     """
 
+    # Get the approved rotation period for KMS keys
+    try:
+        approved_rotation_period = int(getenv("ROTATION_PERIOD"))
+        logging.info(
+            "The Cloud KMS desired rotation period is %s days.",
+            approved_rotation_period
+        )
+    except:
+        logging.error("The KMS rotation period is not found in the environment variables.")
+
+    # Convert approved rotation period to seconds
+    approved_rotation_period_seconds = 60*60*24*approved_rotation_period
+
     # Configure Pub/Sub variables
     finding_type = "kms_bad_rotation_period"
     # Set our pub/sub message
-    message = f"Long or no rotation period on {crypto_key_id} in project: {project_id}."
+    message = f"Unapproved rotation period on {crypto_key_id} in project: {project_id}."
 
     # Rotation period evaluation logic
     # If the rotation period on the crypto key is LONGER
-    if rotation_period > 7776000: #TODO: move to user selected value
+    if rotation_period > approved_rotation_period_seconds:
         logging.info(
             "Cloud KMS crypto key %s has an invalid rotation period.",
             crypto_key_metadata.name
-        ) ##TODO: Add user value
-        #logging.info("Cloud KMS crypto key rotation periods need to be %s or under", ) ##TODO: Custom value # pylint: disable=line-too-long
+        )
+        logging.info(
+            "Cloud KMS crypto key rotation periods need to be %s days or less.",
+            approved_rotation_period
+        )
 
         # Publish message to Pub/Sub
-        logging.info("Publishing message to Pub/Sub.")
+        logging.info("Publishing alerting message to Pub/sub.")
         try:
             publish_message(
                 finding_type,
@@ -205,28 +221,29 @@ def review_rotation_period(rotation_period, crypto_key_metadata, crypto_key_id, 
                 message,
                 topic_id
             )
-            logging.info("Published message to %s", topic_id)
+            logging.info("Published message to %s.", topic_id)
         except:
-            logging.error("Could not publish message to %s", topic_id)
+            logging.error("Could not publish message to %s.", topic_id)
 
         # Update the rotation period to specified value
-        logging.info("Updating the rotation period on Cloud KMS crypto key %s", crypto_key_id)
-        update_rotation_period(crypto_key_metadata, crypto_key_id) #TODO: Add user value
+        logging.info("Updating the rotation period on Cloud KMS crypto key %s...", crypto_key_id)
+        update_rotation_period(crypto_key_metadata, crypto_key_id, approved_rotation_period_seconds)
 
     # Or if the rotation period is under
-    elif rotation_period <= 7776000: #TODO: move to user selected value
+    elif rotation_period <= approved_rotation_period_seconds:
         logging.info(
-            "Cloud KMS crypto key %s has a rotation period under the requirement. \n Exiting.",
-            crypto_key_metadata.name
-        ) ##TODO: Add user value
+            "Cloud KMS crypto key %s has a rotation period less than the requirement of %s days. \n Exiting.",
+            crypto_key_metadata.name, approved_rotation_period
+        )
 
-def update_rotation_period(crypto_key_metadata, crypto_key_id):
+def update_rotation_period(crypto_key_metadata, crypto_key_id, approved_rotation_period_seconds):
     """
     Updates the crypto keys rotation period to known value.
 
     Args:
     crypto_key_metadata - The crypto keys metadata information.
-    some_user_value -
+    crypto_key_id - The Cloud KMS key ID.
+    approved_rotation_period_seconds - The approved rotation period in seconds.
     """
 
     # Create the client.
@@ -239,10 +256,10 @@ def update_rotation_period(crypto_key_metadata, crypto_key_id):
     key = {
         "name": crypto_key_name,
         "rotation_period": {
-            "seconds": 60*60*24*90  # Rotate the key every 90 days. ##TODO: Configure for user value
+            "seconds": approved_rotation_period_seconds  # Rotate the key every X days.
         },
         "next_rotation_time": {
-            "seconds": int(time.time()) + 60*60*24  # Start the first rotation in 24 hours. ##TODO: Configure for user value # pylint: disable=line-too-long
+            "seconds": int(time.time()) + 60*60*24  # Start the first rotation in 24 hours.
         }
     }
 
