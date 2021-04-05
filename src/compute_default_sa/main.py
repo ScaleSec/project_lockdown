@@ -104,7 +104,7 @@ def eval_gce_info(gce_info, instance_name, project_id):
 
     gce_sa = gce_info['serviceAccounts'][0]['email']
 
-    if "developer.gserviceaccount.com" in gce_sa:
+    if "compute@developer.gserviceaccount.com" in gce_sa:
         logging.info(f"GCE instance: {instance_name} in project: {project_id} is using the default compute service account.")
         return gce_sa
     else:
