@@ -43,7 +43,7 @@
 #   }
 #   compute_default_sa = {
 #     lockdown_project = "test_project",
-#     name = "gcedefaultsa",
+#     name = "gcedefsa",
 #     log_sink_filter = "protoPayload.serviceName=\"compute.googleapis.com\" AND ((protoPayload.methodName=\"beta.compute.instances.insert\" AND protoPayload.request.serviceAccounts.email=~\"^\\d{1,18}-compute@developer.gserviceaccount.com$\") OR protoPayload.methodName=\"v1.compute.instances.start\") AND NOT protoPayload.authenticationInfo.principalEmail"
 #     function_perms = ["logging.logEntries.create", "pubsub.topics.publish", "compute.instances.get", "compute.instances.stop"],
 #   }
