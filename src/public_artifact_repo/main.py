@@ -17,8 +17,8 @@ def pubsub_trigger(data, context):
         for public access and remediate if public access exists.
 
     Args:
-    data: Contains the Pub/Sub message
-    context: The Cloud Functions event metdata
+        data: Contains the Pub/Sub message
+        context: The Cloud Functions event metdata
     """
 
     # Integrates cloud logging handler to python logging
@@ -66,7 +66,7 @@ def pubsub_trigger(data, context):
         artifact_policy = get_artifact_policy(client, registry_resource_name)
 
         # Checks the artifact registry repository IAM policy for public members
-        public_members = check_for_public_members(artifact_policy, public_users)
+        public_members = check_for_public_members(artifact_policy, public_users, registry_resource_name)
 
         # If a public member was found
         if public_members:
@@ -134,6 +134,10 @@ def get_artifact_policy(client, registry_resource_name):
     # Using the created class object above
     # Get the IAM policy attached to the artifact repository
     try:
+        logging.info(
+            "Getting IAM policy from %s",
+            registry_resource_name
+        )
         artifact_policy = client.get_iam_policy(repo)
     except exceptions.PermissionDenied as perm_error:
         logging.error(
@@ -143,10 +147,14 @@ def get_artifact_policy(client, registry_resource_name):
         )
         sys.exit(1)
 
+    logging.info(
+            "IAM policy successfully retrieved."
+        )
+
     return artifact_policy
 
 
-def check_for_public_members(artifact_policy, public_users):
+def check_for_public_members(artifact_policy, public_users, registry_resource_name):
     """Checks the IAM policy in question for "public" IAM members.
         Example public members include "allUsers" and "allAuthenticatedUsers".
 
@@ -155,12 +163,17 @@ def check_for_public_members(artifact_policy, public_users):
                                 on the artifact repository resource.
         public_users ([list]): A list of all IAM members in GCP
                             that are considered public.
+        registry_resource_name ([str]): The full resource name
+                                        of the artifact registry repository.
 
     Returns:
         [bool]: True if there are public members
                 in the IAM resource policy.
     """
 
+    logging.info(
+            "Checking for public members.."
+        )
     # For each binding in the resource policy
     for binding in artifact_policy.bindings:
         # binding.members can be a list of members
@@ -169,6 +182,10 @@ def check_for_public_members(artifact_policy, public_users):
         for member in binding.members:
             # Check to see if member is public
             if member in public_users:
+                logging.info(
+                    "Artifact registry repository \"%s\" has at least one public member!",
+                    registry_resource_name
+                )
                 return True #TODO: do we just call remove?
             else:
                 logging.debug("IAM binding member is not public.")
@@ -186,6 +203,9 @@ def remove_public_members(artifact_policy, public_users):
         [list]: A private IAM policy for an artifact registry repository.
     """
 
+    logging.info(
+            "Generating a new private-only IAM resource policy..",
+        )
     # For each binding in the resource policy
     for binding in artifact_policy.bindings:
         # binding.members can be a list of members
@@ -194,7 +214,10 @@ def remove_public_members(artifact_policy, public_users):
         for member in binding.members:
             # Check to see if member is public
             if member in public_users:
-                logging.info("Found public IAM member.")
+                logging.info(
+                    "Removing public IAM member \"%s\".",
+                    member
+                )
                 # Remove the public member from the IAM binding
                 binding.members.remove(member)
             else:
