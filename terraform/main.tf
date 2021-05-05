@@ -124,7 +124,7 @@ resource "google_cloudfunctions_function" "cfn" {
   timeout               = 300
   entry_point           = "pubsub_trigger"
   service_account_email = google_service_account.cfn_sa.email
-  runtime               = "python37"
+  runtime               = "python38"
 
   event_trigger {
     event_type = "google.pubsub.topic.publish"
