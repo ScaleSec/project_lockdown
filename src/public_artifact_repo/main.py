@@ -5,11 +5,12 @@ import sys
 
 from os import getenv
 from google.cloud import artifactregistry
-from google.api_core import exceptions # pylint: disable=import-error
+from google.api_core import exceptions  # pylint: disable=import-error
 
-from lockdown_logging import create_logger # pylint: disable=import-error
-from lockdown_pubsub import publish_message # pylint: disable=import-error
-from lockdown_checklist import check_list # pylint: disable=import-error
+
+from lockdown_logging import create_logger  # pylint: disable=import-error
+from lockdown_pubsub import publish_message  # pylint: disable=import-error
+from lockdown_checklist import check_list  # pylint: disable=import-error
 
 
 def pubsub_trigger(data, context):
@@ -74,12 +75,27 @@ def pubsub_trigger(data, context):
             # Set our pub/sub message
             message = f"Found public members on the artifact registry repo: {registry_resource_name}."
             # Publish message to Pub/Sub
-            logging.info('Publishing message to Pub/Sub.')
+            logging.info(
+                "Publishing message to Pub/Sub."
+            )
             try:
-                publish_message(finding_type, mode, registry_resource_name, project_id, message, topic_id)
-                logging.info(f'Published message to {topic_id}')
+                publish_message(
+                    finding_type,
+                    mode,
+                    registry_resource_name,
+                    project_id,
+                    message,
+                    topic_id
+                )
+                logging.info(
+                    "Published message to %s",
+                    topic_id
+                )
             except:
-                logging.error(f'Could not publish message to {topic_id}')
+                logging.error(
+                    "Could not publish message to %s",
+                    topic_id
+                )
                 raise
 
             # if the function is running in "write" mode, remove public members
@@ -186,9 +202,10 @@ def check_for_public_members(artifact_policy, public_users, registry_resource_na
                     "Artifact registry repository \"%s\" has at least one public member!",
                     registry_resource_name
                 )
-                return True #TODO: do we just call remove?
+                return True
             else:
                 logging.debug("IAM binding member is not public.")
+
 
 def remove_public_members(artifact_policy, public_users):
     """Removes the public IAM members from the IAM policy.
@@ -224,6 +241,7 @@ def remove_public_members(artifact_policy, public_users):
                 logging.debug("IAM binding member is not public.")
 
     return artifact_policy
+
 
 def update_artifact_policy(client, private_policy, registry_resource_name):
     """[summary]
