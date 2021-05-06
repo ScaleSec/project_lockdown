@@ -78,4 +78,10 @@
 #     log_sink_filter = "protoPayload.serviceName=\"cloudkms.googleapis.com\" AND protoPayload.methodName=\"SetIamPolicy\" AND (resource.type=\"cloudkms_cryptokey\" OR resource.type=\"cloudkms_keyring\") AND (protoPayload.request.policy.bindings.members=\"allAuthenticatedUsers\" OR protoPayload.request.policy.bindings.members=\"allUsers\") AND NOT protoPayload.authenticationInfo.principalEmail",
 #     function_perms  = ["logging.logEntries.create", "pubsub.topics.publish", "cloudkms.cryptoKeys.getIamPolicy", "cloudkms.cryptoKeys.setIamPolicy", "cloudkms.keyRings.getIamPolicy", "cloudkms.keyRings.setIamPolicy"],
 #   }
+#   public_artifact_repo = {
+#     lockdown_project = "test_project",
+#     name   = "publicrepo",
+#     log_sink_filter = "protoPayload.serviceName=\"artifactregistry.googleapis.com\" protoPayload.request.@type=\"type.googleapis.com\/google.iam.v1.SetIamPolicyRequest\" protoPayload.authorizationInfo.permission=\"artifactregistry.repositories.setIamPolicy\" AND NOT protoPayload.authenticationInfo.principalEmail",
+#     function_perms  = ["logging.logEntries.create", "pubsub.topics.publish", "artifactregistry.repositories.getIamPolicy", "artifactregistry.repositories.setIamPolicy"],
+#   }
 # }
