@@ -228,7 +228,7 @@ def remove_public_members(artifact_policy, public_users):
         # binding.members can be a list of members
         #   if multiple IAM members have the same IAM role
         # For each member in the IAM binding
-        for member in binding.members:
+        for member in reversed(binding.members):
             # Check to see if member is public
             if member in public_users:
                 logging.info(
@@ -264,8 +264,14 @@ def update_artifact_policy(client, private_policy, registry_resource_name):
     # Update the public artifact registry repository
     # with a private IAM policy
     try:
-        logging.info("Updating IAM policy on artifact repo \"%s\"..")
+        logging.info(
+            "Updating IAM policy on artifact repo \"%s\"..",
+            registry_resource_name
+        )
         client.set_iam_policy(repo)
+        logging.info(
+            "Update Successful"
+        )
     except exceptions.PermissionDenied as perm_error:
         logging.error(
             "Error \"%s\" while updating the IAM resource policy for artifact repo \"%s\".",
