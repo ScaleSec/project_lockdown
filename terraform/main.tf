@@ -99,7 +99,7 @@ data "archive_file" "source" {
 ## Cloud Function source bucket
 resource "google_storage_bucket" "cfn_bucket" {
   project = var.lockdown_project
-  name    = "${lower(var.name)}-${var.function_name}_cfn_bucket_${var.lockdown_project}"
+  name    = "${lower(var.name)}-${var.function_name}_cfn_${var.lockdown_project}"
 
   uniform_bucket_level_access = true
 }
