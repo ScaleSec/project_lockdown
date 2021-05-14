@@ -81,7 +81,13 @@
 #   public_artifact_repo = {
 #     lockdown_project = "test_project",
 #     name   = "publicrepo",
-#     log_sink_filter = "protoPayload.serviceName=\"artifactregistry.googleapis.com\" protoPayload.request.@type=\"type.googleapis.com\/google.iam.v1.SetIamPolicyRequest\" protoPayload.authorizationInfo.permission=\"artifactregistry.repositories.setIamPolicy\" AND NOT protoPayload.authenticationInfo.principalEmail",
+#     log_sink_filter = "protoPayload.serviceName=\"artifactregistry.googleapis.com\" protoPayload.request.@type=\"type.googleapis.com/google.iam.v1.SetIamPolicyRequest\" protoPayload.authorizationInfo.permission=\"artifactregistry.repositories.setIamPolicy\" AND NOT protoPayload.authenticationInfo.principalEmail",
 #     function_perms  = ["logging.logEntries.create", "pubsub.topics.publish", "artifactregistry.repositories.getIamPolicy", "artifactregistry.repositories.setIamPolicy"],
+#   }
+#   protect_lockdown_sa = {
+#     lockdown_project = "test_project",
+#     name   = "protectlockdown",
+#     log_sink_filter = "resource.labels.email_id=~\"^[a-z-]{1,21}-lockdown@*\" AND protoPayload.methodName=\"google.iam.admin.v1.SetIAMPolicy\" AND (protoPayload.serviceData.policyDelta.bindingDeltas.role=\"roles/iam.serviceAccountTokenCreator\" OR protoPayload.serviceData.policyDelta.bindingDeltas.role=\"roles/iam.serviceAccountKeyAdmin\" OR protoPayload.serviceData.policyDelta.bindingDeltas.role=\"roles/iam.workloadIdentityUser\" OR protoPayload.serviceData.policyDelta.bindingDeltas.role=\"roles/iam.serviceAccountUser\") AND NOT protoPayload.authenticationInfo.principalEmail",
+#     function_perms  = ["logging.logEntries.create", "pubsub.topics.publish", "iam.serviceAccounts.getIamPolicy", "iam.serviceAccounts.setIamPolicy"],
 #   }
 # }
