@@ -169,7 +169,7 @@ def remediate_iam_policy(sa_iam_policy, sa_resource_name, risky_roles):
             )
             sa_iam_policy["bindings"].remove(binding)
         else:
-            logging.info("IAM binding does not contain risky role.")
+            logging.info(f"IAM binding: {binding} does not contain risky role.")
 
     return sa_iam_policy
 
