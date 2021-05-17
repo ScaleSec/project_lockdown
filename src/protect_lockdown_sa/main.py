@@ -14,6 +14,10 @@ def pubsub_trigger(data, context):
     """
     Used with Pub/Sub trigger method to evaluate
     the IAM bindings attached to service accounts.
+
+    Args:
+        data: Contains the Pub/Sub message
+        context:  The Cloud Functions event metdata
     """
 
     # Integrates cloud logging handler to python logging
@@ -108,11 +112,11 @@ def get_sa_iam_policy(iam_client, sa_resource_name):
     """Gets the IAM policy for the service account.
 
     Args:
-        iam_client ([type]): [description]
-        sa_resource_name ([type]): [description]
+        iam_client [class object]: The GCP IAM client.
+        sa_resource_name ([str]): The GCP service account full resource name.
 
     Returns:
-        [type]: [description]
+        [dict]: The IAM policy attached to the sa_resource_name.
     """
 
     try:
@@ -139,7 +143,12 @@ def analyze_policy(sa_iam_policy, sa_resource_name, risky_roles):
     """Check for the existence of risky roles.
 
     Args:
-        sa_iam_policy ([type]): [description]
+        sa_iam_policy ([dict]): The IAM policy attached to the sa_resource_name.
+        sa_resource_name ([str]): The GCP service account full resource name.
+        risky_roles ([list]): A list of risky roles to check current attached roles against.
+
+    Returns:
+        [bool]: True is a risky role was found in the IAM policy.
     """
 
     for binding in sa_iam_policy["bindings"]:
@@ -155,9 +164,12 @@ def remediate_iam_policy(sa_iam_policy, sa_resource_name, risky_roles):
     """Remove risky IAM roles from the service account IAM policy.
 
     Args:
-        sa_iam_policy ([type]): [description]
-        sa_resource_name ([type]): [description]
-        iam_client ([type]): [description]
+        sa_iam_policy ([dict]): The IAM policy attached to the sa_resource_name.
+        sa_resource_name ([str]): The GCP service account full resource name.
+        risky_roles ([list]): A list of risky roles to check current attached roles against.
+
+    Returns:
+        [dict]: An updated non-risky IAM policy. All risky roles removed.
     """
 
     # We iterate in reverse due to removing entries
@@ -178,9 +190,11 @@ def update_new_policy(new_policy, iam_client, sa_resource_name):
     """Updates target SA with new IAM policy.
 
     Args:
-        new_policy ([type]): [description]
-        iam_client ([type]): [description]
+        new_policy ([dict]): An updated non-risky IAM policy. All risky roles removed.
+        iam_client [class object]: The GCP IAM client.
+        sa_resource_name ([str]): The GCP service account full resource name.
     """
+
     body = {
         "policy": new_policy
     }
@@ -203,6 +217,12 @@ def update_new_policy(new_policy, iam_client, sa_resource_name):
 
 
 def create_client():
+    """Creates a GCP IAM client.
+
+    Returns:
+        [class object]: The GCP IAM client.
+    """
+
     try:
         logging.info("Creating IAM client..")
         iam_client = discovery.build('iam', 'v1')
