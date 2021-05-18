@@ -49,4 +49,5 @@ module "function" {
   project_list     = lookup(each.value, "allowlist", var.project_list)
   list_type        = lookup(each.value, "allowlist", var.list_type)
   rotation_period  = var.rotation_period
+  risky_roles      = var.risky_roles
 }

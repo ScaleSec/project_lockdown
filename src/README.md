@@ -18,6 +18,9 @@ All lockdown remediation functions are triggered via a Pub/Sub push message base
 - This remediation also sets the key to be rotated in the next 24 hours.
 - __Note:__ Rotation periods are only supported for symmetric keys at this time in GCP.
 
+## Protect the Project Lockdown service accounts
+- The Project Lockdown service accounts are generally created in a single project but have IAM permissions on the GCP organization level. These service accounts could be targets for malicious actors due to their ability to perform CRUD actions across all GCP projects in the organization. Project Lockdown can protect itself using a list of predefined GCP roles that are considered "risky". An example of a risky role would be `iam.serviceAccountTokenCreator` because it would allow a person to create authentication credentials with wide-reaching permissions. The list of risky roles is configured via a Terraform variable called `risky_roles` that is passed into the Cloud Function as an environment variable.
+
 ## Publicly exposed resources
 - Publicly exposed resources pose one of the largest attack targets in the cloud. Malicious actors are constantly scanning for public resources in order to exfiltrate customer data, gain access to customer's environments, or even sabotage with an aim to disrupt workloads. With this in mind, the main bulk of our first remediations are around keeping your resources private. We try to target scenarios where there are no current safeguards available from GCP (Organization Policy constraints, for example.)
 

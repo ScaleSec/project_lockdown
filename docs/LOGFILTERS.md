@@ -19,6 +19,8 @@ The following table contains the log sink filters (advanced log queries) used by
 | Pub/Sub Topics | `resource.type="pubsub_topic" AND protoPayload.methodName="google.iam.v1.IAMPolicy.SetIamPolicy"`
 | KMS Keys creations or updates | `protoPayload.serviceName="cloudkms.googleapis.com" AND (protoPayload.methodName="CreateCryptoKey" OR protoPayload.methodName="UpdateCryptoKey") AND resource.type="cloudkms_cryptokey"`
 | KMS Keys and key ring IAM policy public updates | `protoPayload.serviceName="cloudkms.googleapis.com" AND (protoPayload.methodName="CreateCryptoKey" OR (protoPayload.methodName="UpdateCryptoKey" AND protoPayload.request.updateMask=~"rotationPeriod")) AND resource.type="cloudkms_cryptokey"`
+| Artifact Registry Repo | `protoPayload.serviceName="artifactregistry.googleapis.com" protoPayload.request.@type="type.googleapis.com/google.iam.v1.SetIamPolicyRequest" protoPayload.authorizationInfo.permission="artifactregistry.repositories.setIamPolicy"`
+| Project Lockdown Service Account IAM Updates | `resource.labels.email_id=~"^[a-z-]{1,21}-lockdown@*" AND protoPayload.methodName="google.iam.admin.v1.SetIAMPolicy" AND protoPayload.authorizationInfo.permission="iam.serviceAccounts.setIamPolicy"`
 
 
 
