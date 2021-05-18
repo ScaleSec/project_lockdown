@@ -87,7 +87,7 @@
 #   protect_lockdown_sa = {
 #     lockdown_project = "test_project",
 #     name   = "protectlckdwn",
-#     log_sink_filter = "resource.labels.email_id=~\"^[a-z-]{1,21}-lockdown@*\" AND protoPayload.methodName=\"google.iam.admin.v1.SetIAMPolicy\" AND NOT protoPayload.authenticationInfo.principalEmail",
+#     log_sink_filter = "resource.labels.email_id=~\"^[a-z-]{1,21}-lockdown@*\" AND protoPayload.methodName=\"google.iam.admin.v1.SetIAMPolicy\" AND protoPayload.authorizationInfo.permission=\"iam.serviceAccounts.setIamPolicy\" AND NOT protoPayload.authenticationInfo.principalEmail",
 #     function_perms  = ["logging.logEntries.create", "pubsub.topics.publish", "iam.serviceAccounts.getIamPolicy", "iam.serviceAccounts.setIamPolicy"],
 #   }
 # }
