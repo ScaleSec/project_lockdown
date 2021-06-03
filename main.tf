@@ -1,15 +1,3 @@
-# TODO: put in a feature request for the below functionality
-
-# module "function" {
-#   for_each = var.enabled_modules
-#   source   = "./modules/${each.key}"
-
-#   org_id = lookup(each.value, "org_id")
-#   project = lookup(each.value, "project")
-#   region = lookup(each.value, "region")
-#   name = lookup(each.value, "name")
-#   function_perms = lookup(each.value, "function_perms")
-# }
 
 resource "google_pubsub_topic" "alerting_topic" {
   name    = var.topic_name
@@ -27,7 +15,11 @@ module "project-services" {
     "iam.googleapis.com",
     "cloudfunctions.googleapis.com",
     "storage.googleapis.com",
-    "pubsub.googleapis.com"
+    "pubsub.googleapis.com",
+    "cloudbuild.googleapis.com",
+    "cloudkms.googleapis.com",
+    "artifactregistry.googleapis.com",
+    "compute.googleapis.com"
   ]
   disable_services_on_destroy = false
 }
@@ -38,7 +30,7 @@ module "function" {
   function_name = each.key
 
   org_id           = var.org_id
-  lockdown_project = lookup(each.value, "lockdown_project")
+  lockdown_project = lookup(each.value, "lockdown_project", var.lockdown_project)
   region           = lookup(each.value, "region", var.region)
   mode             = lookup(each.value, "mode", var.mode)
   name             = lookup(each.value, "name")
