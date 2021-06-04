@@ -40,6 +40,7 @@ module "function" {
   topic_id         = google_pubsub_topic.alerting_topic.name
   project_list     = lookup(each.value, "allowlist", var.project_list)
   list_type        = lookup(each.value, "allowlist", var.list_type)
+  alert_topic_project_id = var.alert_topic_project_id
   rotation_period  = var.rotation_period
   risky_roles      = var.risky_roles
 }
