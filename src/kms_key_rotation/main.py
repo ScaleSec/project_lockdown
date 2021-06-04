@@ -26,9 +26,7 @@ def pubsub_trigger(data, context):
 
     # Integrates cloud logging handler to python logging
     create_logger()
-    logging.info(
-        "Received Cloud KMS crypto key creation or update log event. \n Evaluation rotation period." # pylint: disable=line-too-long
-    )
+    logging.info("Received Cloud KMS crypto key creation or update log event. Evaluating rotation period.") # pylint: disable=line-too-long)
 
     # Determine if lockdown is running in view-only mode
     try:
@@ -97,7 +95,7 @@ def pubsub_trigger(data, context):
         )
     else:
         logging.info(
-            f"The project {project_id} is in the allowlist or is not in the denylist. No action being taken.")  # pylint: disable=line-too-long)
+            f"The project {project_id} is in the allowlist or is not in the denylist. No action being taken.")  # pylint: disable=line-too-long
 
 def get_key_data(client, key_name):
     """
@@ -134,13 +132,9 @@ def find_rotation_period(crypto_key_metadata):
     # Check to see if the crypto key is symmetric
     # Asymmetric encryption keys do not support rotation periods
     if crypto_key_metadata.primary.algorithm.GOOGLE_SYMMETRIC_ENCRYPTION == 1:
-        logging.info(
-            f"Cloud KMS crypto key {crypto_key_metadata.name} is a symmetric encryption key. \n Checking rotation period.",
-        )
+        logging.info(f"Cloud KMS crypto key {crypto_key_metadata.name} is a symmetric encryption key. Checking rotation period.")
     else:
-        logging.info(
-            f"Cloud KMS crypto key {crypto_key_metadata.name} is not using symmetric encryption, rotation periods are not supported. \n Exiting", # pylint: disable=line-too-long
-        )
+        logging.info(f"Cloud KMS crypto key {crypto_key_metadata.name} is not using symmetric encryption, rotation periods are not supported. \n Exiting") # pylint: disable=line-too-long
         sys.exit(0)
     # If the crypto key does not have a rotation period
     # Set the period to 0
