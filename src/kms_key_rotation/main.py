@@ -91,7 +91,7 @@ def pubsub_trigger(data, context):
             rotation_period,
             crypto_key_metadata,
             crypto_key_id,
-            alert_project,
+            project_id,
             mode,
             topic_id
         )
@@ -180,6 +180,12 @@ def review_rotation_period(rotation_period, crypto_key_metadata, crypto_key_id, 
     topic_id - The pub/sub message topic ID.
     """
 
+    # Determine alerting Pub/Sub topic
+    try:
+        alert_project = getenv('ALERT_GCP_PROJECT')
+    except:
+        logging.error('GCP alert project not found in environment variable.')
+
     # Get the approved rotation period for KMS keys
     try:
         approved_rotation_period = int(getenv("ROTATION_PERIOD"))
@@ -210,14 +216,15 @@ def review_rotation_period(rotation_period, crypto_key_metadata, crypto_key_id, 
         # Publish message to Pub/Sub
         logging.info("Publishing alerting message to Pub/sub.")
         try:
-            #publish_message(
-                #finding_type,
-                #mode,
-                #crypto_key_metadata.name,
-                #project_id,
-                #message,
-                #topic_id
-            #)
+            publish_message(
+                finding_type,
+                mode,
+                crypto_key_metadata.name,
+                alert_project,
+                project_id,
+                message,
+                topic_id
+            )
             logging.info(f"Published message to {topic_id}.")
         except:
             logging.error(f"Could not publish message to {topic_id}.")
