@@ -112,6 +112,7 @@ def pubsub_trigger(data, context):
                     mode,
                     kms_resource_name,
                     alert_project,
+                    project_id,
                     message,
                     topic_id)
                 logging.info("Published message to %s", topic_id)

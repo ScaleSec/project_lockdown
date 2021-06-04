@@ -25,12 +25,18 @@ def pubsub_trigger(data, context):
         mode = getenv('MODE')
     except:
         logging.error('Mode not found in environment variable.')
-    
+
     # Determine alerting Pub/Sub topic
     try:
         topic_id = getenv('TOPIC_ID')
     except:
         logging.error('Topic ID not found in environment variable.')
+
+    # Determine alerting Pub/Sub topic
+    try:
+        alert_project = getenv('ALERT_GCP_PROJECT')
+    except:
+        logging.error('GCP alert project not found in environment variable.')
 
     # Create compute client to make API calls
     compute_client = create_service()
@@ -70,7 +76,7 @@ def pubsub_trigger(data, context):
             # Publish message to Pub/Sub
             logging.info(f'Publishing message to Pub/Sub.')
             try:
-                publish_message(finding_type, mode, image_id, project_id, message, topic_id)
+                publish_message(finding_type, mode, image_id, alert_project, project_id, message, topic_id)
                 logging.info(f'Published message to {topic_id}')
             except:
                 logging.error(f'Could not publish message to {topic_id}')

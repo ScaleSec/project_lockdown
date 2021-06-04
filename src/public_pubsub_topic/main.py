@@ -24,12 +24,18 @@ def pubsub_trigger(data, context):
         mode = getenv('MODE')
     except:
         logging.error('Mode not found in environment variable.')
-    
+
     # Determine alerting Pub/Sub topic
     try:
         topic_id = getenv('TOPIC_ID')
     except:
         logging.error('Topic ID not found in environment variable.')
+
+    # Determine alerting Pub/Sub topic
+    try:
+        alert_project = getenv('ALERT_GCP_PROJECT')
+    except:
+        logging.error('GCP alert project not found in environment variable.')
 
     # Converting log to json
     data_buffer = base64.b64decode(data['data'])
@@ -58,7 +64,7 @@ def pubsub_trigger(data, context):
         # Evaluate policy and return clean policy without public bindings
         all_users_found, new_policy = eval_iam_policy(client, policy)
 
-        # If a public binding was found, we need to remediate. 
+        # If a public binding was found, we need to remediate.
         if all_users_found:
             finding_type = "public_topic_policy"
             # Set our pub/sub message
@@ -66,7 +72,7 @@ def pubsub_trigger(data, context):
             # Publish message to Pub/Sub
             logging.info(f'Publishing message to Pub/Sub.')
             try:
-                publish_message(finding_type, mode, topic_to_evaluate, project_id, message, topic_id)
+                publish_message(finding_type, mode, topic_to_evaluate, alert_project, project_id, message, topic_id)
                 logging.info(f'Published message to {topic_id}')
             except:
                 logging.error(f'Could not publish message to {topic_id}')
@@ -93,7 +99,7 @@ def eval_iam_policy(client, policy):
     """
 
     # Set bool to false, will be true if allusers are found
-    was_public = False 
+    was_public = False
 
     # There may not be any bindings to check, so verify that first
     if policy.bindings:

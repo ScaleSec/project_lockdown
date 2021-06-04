@@ -80,7 +80,7 @@ def check_resource(project_id, firewall_name):
         logging.info(f'Publishing message to Pub/Sub.')
         try:
             logging.info(message)
-            publish_message(finding_type, mode, firewall_name, alert_project, message, topic_id)
+            publish_message(finding_type, mode, firewall_name, alert_project, project_id, message, topic_id)
             logging.info(f'Published message to {topic_id}')
         except:
             logging.error(f'Could not publish message to {topic_id}')

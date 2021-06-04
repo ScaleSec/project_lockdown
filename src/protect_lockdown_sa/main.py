@@ -38,6 +38,12 @@ def pubsub_trigger(data, context):
     except:
         logging.error('Topic ID not found in environment variable.')
 
+    # Determine alerting Pub/Sub topic
+    try:
+        alert_project = getenv('ALERT_GCP_PROJECT')
+    except:
+        logging.error('GCP alert project not found in environment variable.')
+
     try:
         risky_roles = getenv('RISKY_ROLES')
     except:
@@ -78,6 +84,7 @@ def pubsub_trigger(data, context):
                     finding_type,
                     mode,
                     sa_resource_name,
+                    alert_project,
                     project_id,
                     message,
                     topic_id

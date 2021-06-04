@@ -101,7 +101,7 @@ def eval_bucket(bucket_name, policy, bucket, project_id, mode):
         # Publish message to Pub/Sub
         logging.info('Publishing message to Pub/Sub.')
         try:
-            publish_message(finding_type, mode, bucket_name, alert_project, message, topic_id)
+            publish_message(finding_type, mode, bucket_name, alert_project, project_id, message, topic_id)
             logging.info(f'Published message to {topic_id}')
         except:
             logging.error(f'Could not publish message to {topic_id}')

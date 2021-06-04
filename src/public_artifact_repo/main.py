@@ -90,6 +90,7 @@ def pubsub_trigger(data, context):
                     mode,
                     registry_resource_name,
                     alert_project,
+                    project_id,
                     message,
                     topic_id
                 )
