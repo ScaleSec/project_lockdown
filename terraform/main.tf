@@ -46,10 +46,10 @@ resource "google_logging_organization_sink" "sink" {
 
 ## Org level custom Cloud IAM role
 resource "google_organization_iam_custom_role" "custom_role" {
-  role_id     = "${var.function_name}_custom_role"
+  role_id     = "${var.function_name}_custom_role_${random_id.random.hex}"
   org_id      = var.org_id
-  title       = "${var.function_name} Role"
-  description = "Minimally privileged role to manage Resources."
+  title       = "${var.function_name} lockdown role"
+  description = "Minimally privileged role to manage resources."
   permissions = var.function_perms
 }
 
@@ -68,7 +68,7 @@ resource "google_organization_iam_member" "custom_role_member" {
 resource "google_service_account" "cfn_sa" {
   project      = var.lockdown_project
   account_id   = local.function_sa_name
-  display_name = "${var.name} ${var.function_name} CFN SA"
+  display_name = "${var.name} ${var.function_name} Lockdown SA"
 }
 
 ## Pub/Sub Topic for log exports
