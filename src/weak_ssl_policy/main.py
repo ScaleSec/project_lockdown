@@ -128,12 +128,14 @@ def update_ssl_policy(compute_client, ssl_description, project_id, ssl_policy):
 
     # Update the SSL Policy to use TLS 1.1
     ssl_description['minTlsVersion'] = "TLS_1_1"
-
+    logging.info(f"Updating the TLS version on SSL policy {ssl_policy}.")
     try:
         compute_client.sslPolicies().patch(project=project_id, sslPolicy=ssl_policy, body=ssl_description).execute()
     except:
         logging.error(f"Could not update the SSL Policy: {ssl_policy}.")
         raise
+
+    logging.info(f"TLS update successful on {ssl_policy}.")
 
 def create_service():
     """
