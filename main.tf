@@ -9,7 +9,7 @@ module "project-services" {
   source   = "terraform-google-modules/project-factory/google//modules/project_services"
   version  = "4.0.0"
 
-  project_id = lookup(each.value, "lockdown_project")
+  project_id = lookup(each.value, "lockdown_project", var.lockdown_project)
 
   activate_apis = [
     "iam.googleapis.com",
