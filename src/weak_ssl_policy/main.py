@@ -24,12 +24,18 @@ def pubsub_trigger(data, context):
         mode = getenv('MODE')
     except:
         logging.error('Mode not found in environment variable.')
-    
+
     # Determine alerting Pub/Sub topic
     try:
         topic_id = getenv('TOPIC_ID')
     except:
         logging.error('Topic ID not found in environment variable.')
+
+    # Determine alerting Pub/Sub topic
+    try:
+        alert_project = getenv('ALERT_GCP_PROJECT')
+    except:
+        logging.error('GCP alert project not found in environment variable.')
 
     # Create compute client to make API calls
     compute_client = create_service()
@@ -69,7 +75,7 @@ def pubsub_trigger(data, context):
             # Publish message to Pub/Sub
             logging.info(f'Publishing message to Pub/Sub.')
             try:
-                publish_message(finding_type, mode, ssl_policy, project_id, message, topic_id)
+                publish_message(finding_type, mode, ssl_policy, alert_project, message, topic_id)
                 logging.info(f'Published message to {topic_id}')
             except:
                 logging.error(f'Could not publish message to {topic_id}')
@@ -95,7 +101,7 @@ def get_ssl_policy(project_id, ssl_policy, compute_client):
     except:
         logging.error(f"Could not get the SSL policy information from: {ssl_policy}.")
         raise
-    
+
     return ssl_description
 
 def analyze_ssl_policy(ssl_description, project_id, compute_client, ssl_policy):
@@ -116,7 +122,7 @@ def analyze_ssl_policy(ssl_description, project_id, compute_client, ssl_policy):
 
 def update_ssl_policy(compute_client, ssl_description, project_id, ssl_policy):
     """
-    Updates the SSL policy to TLS 1.1. 
+    Updates the SSL policy to TLS 1.1.
     TLS 1.0 is considered weak and should not be used.
     """
 

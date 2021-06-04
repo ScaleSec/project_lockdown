@@ -55,6 +55,12 @@ def eval_bucket(bucket_name, policy, bucket, project_id, mode):
     Evaluates a bucket for public access and returns list of public members and roles.
     """
 
+    # Determine alerting Pub/Sub topic
+    try:
+        alert_project = getenv('ALERT_GCP_PROJECT')
+    except:
+        logging.error('GCP alert project not found in environment variable.')
+
     try:
         topic_id = getenv('TOPIC_ID')
     except:
@@ -95,12 +101,12 @@ def eval_bucket(bucket_name, policy, bucket, project_id, mode):
         # Publish message to Pub/Sub
         logging.info('Publishing message to Pub/Sub.')
         try:
-            publish_message(finding_type, mode, bucket_name, project_id, message, topic_id)
+            publish_message(finding_type, mode, bucket_name, alert_project, message, topic_id)
             logging.info(f'Published message to {topic_id}')
         except:
             logging.error(f'Could not publish message to {topic_id}')
             raise
-        
+
 def remove_public_iam_members_from_policy(bucket_name, member_bindings_to_remove, bucket):
     """
     Takes a dictionary of roles with public members and removes them from a GCS bucket Policy object.

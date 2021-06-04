@@ -138,5 +138,6 @@ resource "google_cloudfunctions_function" "cfn" {
     LIST_TYPE       = var.list_type
     ROTATION_PERIOD = var.rotation_period
     RISKY_ROLES     = var.risky_roles
+    ALERT_GCP_PROJECT = var.alert_topic_project_id
   }
 }
