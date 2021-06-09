@@ -95,7 +95,8 @@ def pubsub_trigger(data, context):
         )
     else:
         logging.info(
-            f"The project {project_id} is in the allowlist or is not in the denylist. No action being taken.")  # pylint: disable=line-too-long
+            f"The project {project_id} is in the allowlist or is not in the denylist. No action being taken." # pylint: disable=line-too-long
+        )  
 
 def get_key_data(client, key_name):
     """
