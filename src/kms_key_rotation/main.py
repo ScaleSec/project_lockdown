@@ -26,9 +26,7 @@ def pubsub_trigger(data, context):
 
     # Integrates cloud logging handler to python logging
     create_logger()
-    logging.info(
-        "Received Cloud KMS crypto key creation or update log event. \n Evaluation rotation period." # pylint: disable=line-too-long
-    )
+    logging.info("Received Cloud KMS crypto key creation or update log event. Evaluating rotation period.") # pylint: disable=line-too-long)
 
     # Determine if lockdown is running in view-only mode
     try:
@@ -41,6 +39,13 @@ def pubsub_trigger(data, context):
         topic_id = getenv("TOPIC_ID")
     except:
         logging.error("Topic ID not found in environment variable.")
+
+    # Determine alerting Pub/Sub topic
+    try:
+        alert_project = getenv('ALERT_GCP_PROJECT')
+    except:
+        logging.error('GCP alert project not found in environment variable.')
+
 
     # Converting log to json
     data_buffer = base64.b64decode(data["data"])
@@ -55,46 +60,43 @@ def pubsub_trigger(data, context):
     # Check our project_id against allow / denylist
     if check_list(project_id):
         logging.info(
-            "The project %s is not in the allowlist, is in the denylist, or a list is not fully configured. \n Continuing evaluation.", # pylint: disable=line-too-long
-            project_id
+            f"The project {project_id} is not in the allowlist, is in the denylist, or a list is not fully configured. Continuing evaluation.", # pylint: disable=line-too-long
+        )
+        # If the project ID is not in the allow / denylist
+        # Continue with evaluation
+
+        # Create the KMS client
+        client = kms.KeyManagementServiceClient()
+
+        # Build the parent key name.
+        key_name = client.crypto_key_path(
+            project_id,
+            location,
+            key_ring_id,
+            crypto_key_id
+        )
+
+        # Call the function to capture
+        # crypto key metadata
+        crypto_key_metadata = get_key_data(client, key_name)
+
+        # Get rotation period from key metadata
+        rotation_period = find_rotation_period(crypto_key_metadata)
+
+        # Review the rotation period against
+        # approved rotation period. Defaults to 90d (7776000s)
+        review_rotation_period(
+            rotation_period,
+            crypto_key_metadata,
+            crypto_key_id,
+            project_id,
+            mode,
+            topic_id
         )
     else:
         logging.info(
-            "The project %sis in the allowlist or is not in the denylist. No action being taken.", # pylint: disable=line-too-long
-            project_id
-        )
-        sys.exit(0)
-    # If the project ID is not in the allow / denylist
-    # Continue with evaluation
-
-    # Create the KMS client
-    client = kms.KeyManagementServiceClient()
-
-    # Build the parent key name.
-    key_name = client.crypto_key_path(
-        project_id,
-        location,
-        key_ring_id,
-        crypto_key_id
-    )
-
-    # Call the function to capture
-    # crypto key metadata
-    crypto_key_metadata = get_key_data(client, key_name)
-
-    # Get rotation period from key metadata
-    rotation_period = find_rotation_period(crypto_key_metadata)
-
-    # Review the rotation period against
-    # approved rotation period. Defaults to 90d (7776000s)
-    review_rotation_period(
-        rotation_period,
-        crypto_key_metadata,
-        crypto_key_id,
-        project_id,
-        mode,
-        topic_id
-    )
+            f"The project {project_id} is in the allowlist or is not in the denylist. No action being taken." # pylint: disable=line-too-long
+        )  
 
 def get_key_data(client, key_name):
     """
@@ -108,11 +110,12 @@ def get_key_data(client, key_name):
     crypto_key_metadata - Cloud KMS crypto key metadata
     """
 
-    logging.info("Getting %s metadata", key_name)
+    logging.info(f"Getting {key_name} metadata")
     try:
         crypto_key_metadata = client.get_crypto_key(name = key_name)
     except exceptions.PermissionDenied as perm_err:
-        logging.error("Error getting crypto key %s", perm_err)
+        logging.error(f"Error getting crypto key {perm_err}")
+        raise
 
     return crypto_key_metadata
 
@@ -130,22 +133,15 @@ def find_rotation_period(crypto_key_metadata):
     # Check to see if the crypto key is symmetric
     # Asymmetric encryption keys do not support rotation periods
     if crypto_key_metadata.primary.algorithm.GOOGLE_SYMMETRIC_ENCRYPTION == 1:
-        logging.info(
-            "Cloud KMS crypto key %s is a symmetric encryption key. \n Checking rotation period.",
-            crypto_key_metadata.name
-        )
+        logging.info(f"Cloud KMS crypto key {crypto_key_metadata.name} is a symmetric encryption key. Checking rotation period.")
     else:
-        logging.info(
-            "Cloud KMS crypto key %s is not using symmetric encryption, rotation periods are not supported. \n Exiting", # pylint: disable=line-too-long
-            crypto_key_metadata.name
-        )
+        logging.info(f"Cloud KMS crypto key {crypto_key_metadata.name} is not using symmetric encryption, rotation periods are not supported. \n Exiting") # pylint: disable=line-too-long
         sys.exit(0)
     # If the crypto key does not have a rotation period
     # Set the period to 0
     if not crypto_key_metadata.rotation_period:
         logging.info(
-            "Cloud KMS crypto key %s has no rotation period configured.",
-            crypto_key_metadata.name
+            f"Cloud KMS crypto key {crypto_key_metadata.name} has no rotation period configured.",
         )
 
         # Set the rotation period to an unrealistic date
@@ -157,8 +153,7 @@ def find_rotation_period(crypto_key_metadata):
         # Capture the rotation period in days
         rotation_period_days = crypto_key_metadata.rotation_period.days
         logging.info(
-            "Cloud KMS crypto key %s has a rotation period of %s days.",
-            crypto_key_metadata.name, rotation_period_days
+            f"Cloud KMS crypto key {crypto_key_metadata.name} has a rotation period of {rotation_period_days} days.",
         )
         # Convert to seconds
         rotation_period = datetime.timedelta(seconds=24*60*60*rotation_period_days).total_seconds()
@@ -180,12 +175,17 @@ def review_rotation_period(rotation_period, crypto_key_metadata, crypto_key_id, 
     topic_id - The pub/sub message topic ID.
     """
 
+    # Determine alerting Pub/Sub topic
+    try:
+        alert_project = getenv('ALERT_GCP_PROJECT')
+    except:
+        logging.error('GCP alert project not found in environment variable.')
+
     # Get the approved rotation period for KMS keys
     try:
         approved_rotation_period = int(getenv("ROTATION_PERIOD"))
         logging.info(
-            "The Cloud KMS desired rotation period is %s days.",
-            approved_rotation_period
+            f"The Cloud KMS desired rotation period is {approved_rotation_period} days.",
         )
     except:
         logging.error("The KMS rotation period is not found in the environment variables.")
@@ -202,12 +202,10 @@ def review_rotation_period(rotation_period, crypto_key_metadata, crypto_key_id, 
     # If the rotation period on the crypto key is LONGER
     if rotation_period > approved_rotation_period_seconds:
         logging.info(
-            "Cloud KMS crypto key %s has an invalid rotation period.",
-            crypto_key_metadata.name
+            f"Cloud KMS crypto key {crypto_key_metadata.name} has an invalid rotation period.",
         )
         logging.info(
-            "Cloud KMS crypto key rotation periods need to be %s days or less.",
-            approved_rotation_period
+            f"Cloud KMS crypto key rotation periods need to be {approved_rotation_period} days or less.",
         )
 
         # Publish message to Pub/Sub
@@ -217,23 +215,23 @@ def review_rotation_period(rotation_period, crypto_key_metadata, crypto_key_id, 
                 finding_type,
                 mode,
                 crypto_key_metadata.name,
+                alert_project,
                 project_id,
                 message,
                 topic_id
             )
-            logging.info("Published message to %s.", topic_id)
+            logging.info(f"Published message to {topic_id}.")
         except:
-            logging.error("Could not publish message to %s.", topic_id)
+            logging.error(f"Could not publish message to {topic_id}.")
 
         # Update the rotation period to specified value
-        logging.info("Updating the rotation period on Cloud KMS crypto key %s...", crypto_key_id)
+        logging.info(f"Updating the rotation period on Cloud KMS crypto key {crypto_key_id}...", )
         update_rotation_period(crypto_key_metadata, crypto_key_id, approved_rotation_period_seconds)
 
     # Or if the rotation period is under
     elif rotation_period <= approved_rotation_period_seconds:
         logging.info(
-            "Cloud KMS crypto key %s has a rotation period less than the requirement of %s days. \n Exiting.", # pylint: disable=line-too-long
-            crypto_key_metadata.name, approved_rotation_period
+            f"Cloud KMS crypto key {crypto_key_metadata.name} has a rotation period less than or equal to the requirement of {approved_rotation_period} days. Exiting.", # pylint: disable=line-too-long
         )
 
 def update_rotation_period(crypto_key_metadata, crypto_key_id, approved_rotation_period_seconds):
@@ -268,13 +266,13 @@ def update_rotation_period(crypto_key_metadata, crypto_key_id, approved_rotation
 
     # Update the rotation period
     try:
-        logging.info("Attempting to update crypto key %s", crypto_key_id)
+        logging.info(f"Attempting to update crypto key {crypto_key_id}")
         client.update_crypto_key(
             request={
             "crypto_key": key,
             "update_mask": update_mask
             }
         )
-        logging.info("Update on %s successful.", crypto_key_id)
+        logging.info(f"Update on {crypto_key_id} successful.")
     except exceptions.PermissionDenied as perm_err:
-        logging.error("Error updating crypto key %s", perm_err)
+        logging.error(f"Error updating crypto key {perm_err}")

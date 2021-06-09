@@ -49,12 +49,18 @@ def check_resource(project_id, firewall_name):
         mode = getenv('MODE')
     except:
         logging.error('Mode not found in environment variable.')
-    
+
     # Determine alerting Pub/Sub topic
     try:
         topic_id = getenv('TOPIC_ID')
     except:
         logging.error('Topic ID not found in environment variable.')
+
+    # Determine alerting Pub/Sub topic
+    try:
+        alert_project = getenv('ALERT_GCP_PROJECT')
+    except:
+        logging.error('GCP alert project not found in environment variable.')
 
     # Create compute client to make API calls
     compute_client = create_service()
@@ -74,7 +80,7 @@ def check_resource(project_id, firewall_name):
         logging.info(f'Publishing message to Pub/Sub.')
         try:
             logging.info(message)
-            publish_message(finding_type, mode, firewall_name, project_id, message, topic_id)
+            publish_message(finding_type, mode, firewall_name, alert_project, project_id, message, topic_id)
             logging.info(f'Published message to {topic_id}')
         except:
             logging.error(f'Could not publish message to {topic_id}')

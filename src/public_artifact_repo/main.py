@@ -40,6 +40,12 @@ def pubsub_trigger(data, context):
     except:
         logging.error('Topic ID not found in environment variable.')
 
+    # Determine alerting Pub/Sub topic
+    try:
+        alert_project = getenv('ALERT_GCP_PROJECT')
+    except:
+        logging.error('GCP alert project not found in environment variable.')
+
     # Converting log to json
     data_buffer = base64.b64decode(data['data'])
     log_entry = json.loads(data_buffer)
@@ -83,6 +89,7 @@ def pubsub_trigger(data, context):
                     finding_type,
                     mode,
                     registry_resource_name,
+                    alert_project,
                     project_id,
                     message,
                     topic_id

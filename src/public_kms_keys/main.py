@@ -87,6 +87,13 @@ def pubsub_trigger(data, context):
             ## Pub/Sub Logic ##
             ###################
 
+
+            # Determine alerting Pub/Sub topic
+            try:
+                alert_project = getenv('ALERT_GCP_PROJECT')
+            except:
+                logging.error('GCP alert project not found in environment variable.')
+
             # Pub/sub topic ID is an env variable
             # Passed in via terraform deployment
             try:
@@ -104,6 +111,7 @@ def pubsub_trigger(data, context):
                     finding_type,
                     mode,
                     kms_resource_name,
+                    alert_project,
                     project_id,
                     message,
                     topic_id)

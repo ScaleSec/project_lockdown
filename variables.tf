@@ -52,3 +52,7 @@ variable "risky_roles" {
   default     = "[\"roles/aiplatform.customCodeServiceAgent\", \"roles/aiplatform.serviceAgent\", \"roles/appengineflex.serviceAgent\", \"roles/bigquerydatatransfer.serviceAgent\", \"roles/cloudbuild.serviceAgent\", \"roles/clouddeploy.serviceAgent\", \"roles/cloudfunctions.serviceAgent\", \"roles/cloudscheduler.serviceAgent\", \"roles/cloudtasks.serviceAgent\", \"roles/cloudtpu.serviceAgent\", \"roles/composer.serviceAgent\", \"roles/compute.serviceAgent\", \"roles/container.serviceAgent\", \"roles/dataflow.serviceAgent\", \"roles/dataprep.serviceAgent\", \"roles/dataproc.hubAgent\", \"roles/dataproc.serviceAgent\", \"roles/editor\", \"roles/eventarc.serviceAgent\", \"roles/genomics.serviceAgent\", \"roles/iam.serviceAccountKeyAdmin\", \"roles/iam.serviceAccountTokenCreator\", \"roles/iam.serviceAccountUser\", \"roles/iam.workloadIdentityUser\", \"roles/lifesciences.serviceAgent\", \"roles/ml.serviceAgent\", \"roles/notebooks.serviceAgent\", \"roles/osconfig.serviceAgent\", \"roles/owner\", \"roles/pubsub.serviceAgent\", \"roles/run.serviceAgent\", \"roles/serverless.serviceAgent\", \"roles/sourcerepo.serviceAgent\", \"roles/workflows.serviceAgent\"]"
   description = "A list of IAM roles that are considered risky. This list is used to check IAM bindings against for the remediation protect_lockdown_sa"
 }
+
+variable "lockdown_project" {
+  description = "The GCP project to deploy lockdown resources to."
+}
